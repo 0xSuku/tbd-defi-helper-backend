@@ -16,9 +16,9 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.get('/fetchWallet', async (req: Request, res: Response) => {
-    const address = req.query['address'];
+    const address = req.query.address;
     if (address && typeof address === 'string') {
-        let tokens: Token[] = [];
+        const tokens: Token[] = [];
         const keys = Object.keys(Tokens.polygon);
         for (const key of keys) {
             const currentTokenDetails = Tokens.polygon[key];
@@ -41,7 +41,7 @@ function getProvider(chainId: ChainId) {
 }
 
 async function getBalances(tokens: Token[], address: string): Promise<CurrencyAmount<Token>[]> {
-    let currencyAmounts: CurrencyAmount<Token>[] = await Promise.all(tokens.map(async token => {
+    const currencyAmounts: CurrencyAmount<Token>[] = await Promise.all(tokens.map(async token => {
         const tokenContract = new ethers.Contract(token.address, erc20, getProvider(token.chainId));
         const balance = await tokenContract.balanceOf(address);
         return CurrencyAmount.fromRawAmount(token, balance);
