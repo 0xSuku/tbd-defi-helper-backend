@@ -10,6 +10,8 @@ const app: Application = express();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+const cors = require('cors');
+app.use(cors());
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Healthy');

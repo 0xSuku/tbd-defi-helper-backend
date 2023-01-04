@@ -73,7 +73,6 @@
   },
   "scripts": {
     "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
-    "prestart": "npm run build",
     "start": "tsc && node ."
   },
   "keywords": [],
