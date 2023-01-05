@@ -1,5 +1,5 @@
 import { Token } from "@uniswap/sdk-core";
-import { TokenInfo } from "../../entities/types";
+import { TokenInfo } from "../../shared/types";
 import { ChainId } from "../chainId";
 
 const polygonTokens: TokenInfo = {

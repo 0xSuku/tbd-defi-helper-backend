@@ -5,6 +5,7 @@ import { CurrencyAmount, Token } from '@uniswap/sdk-core';
 import erc20 from './helpers/abi/erc20';
 import { ethers } from 'ethers';
 import { ChainId } from './helpers/chainId';
+import { WalletResponse } from './shared/types';
 
 const app: Application = express();
 
@@ -28,8 +29,8 @@ app.get('/fetchWallet', async (req: Request, res: Response) => {
                 tokens.push(currentTokenDetails.token);
             }
         }
-        const currencyAmounts: CurrencyAmount<Token>[] = await getBalances(tokens, address);
-        res.send(currencyAmounts);
+        const amounts: WalletResponse[] = await getBalances(tokens, address);
+        res.send(amounts);
     }
 });
 
@@ -42,13 +43,13 @@ function getProvider(chainId: ChainId) {
     }
 }
 
-async function getBalances(tokens: Token[], address: string): Promise<CurrencyAmount<Token>[]> {
-    const currencyAmounts: CurrencyAmount<Token>[] = await Promise.all(tokens.map(async token => {
+async function getBalances(tokens: Token[], address: string): Promise<WalletResponse[]> {
+    const amounts: WalletResponse[] = await Promise.all(tokens.map(async token => {
         const tokenContract = new ethers.Contract(token.address, erc20, getProvider(token.chainId));
         const balance = await tokenContract.balanceOf(address);
-        return CurrencyAmount.fromRawAmount(token, balance);
+        return { token, amount: balance};
     }));
-    return currencyAmounts;
+    return amounts;
 }
 
 const PORT = process.env.PORT || 8000;
