@@ -9,7 +9,7 @@ type TokenDetails = {
     disabled?: boolean;
 }
 
-type WalletResponse = { 
+type TokenAmount = { 
     token: Token;
     amount: string;
 }

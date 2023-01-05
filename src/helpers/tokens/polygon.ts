@@ -1,6 +1,6 @@
 import { Token } from "@uniswap/sdk-core";
 import { TokenInfo } from "../../shared/types";
-import { ChainId } from "../chainId";
+import { ChainId } from "../chains";
 
 const polygonTokens: TokenInfo = {
     FAKE: {
