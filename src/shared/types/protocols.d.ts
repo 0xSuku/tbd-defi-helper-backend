@@ -4,7 +4,7 @@ import { Protocols, ProtocolTypes } from '../protocols/constants';
 
 declare type CurrencyAmountHttp = {
     amount: string;
-    currency?: Token;
+    currency: Token;
 }
 
 declare type ProtocolItem = {
@@ -35,6 +35,6 @@ declare type ContractStaticInfo = {
     type: ProtocolTypes;
     chainId: ChainId;
     token: Token;
-    tokenRewards?: Token;
+    tokenRewards: Token;
     hidden?: boolean;
 }

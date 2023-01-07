@@ -1,5 +1,6 @@
 import { Token } from "@uniswap/sdk-core";
 import { ChainId } from "../../chains";
+import { Tokens } from "../../tokens";
 import { ContractStaticInfo } from "../../types/protocols";
 import { Protocols, ProtocolTypes } from "../constants";
 
@@ -14,6 +15,7 @@ const qiFarms: ContractStaticInfo[] = [{
     type: ProtocolTypes.Farms,
     chainId: ChainId.Polygon,
     token: new Token(ChainId.Polygon, '0xa199569af06cb68960869fe376c9b41f68d8e2d1', 18, 'Arrakis Vault V1 USDC/miMATIC (RAKIS-30)', 'USDC+MAI'),
+    tokenRewards: Tokens.polygon.QI.token
 }, {
     abi: qiFarmABI,
     address: "0xcc54afcecd0d89e0b2db58f5d9e58468e7ad20dc",
@@ -23,6 +25,7 @@ const qiFarms: ContractStaticInfo[] = [{
     type: ProtocolTypes.Farms,
     chainId: ChainId.Polygon,
     token: new Token(ChainId.Polygon, '0x9a8b2601760814019b7e6ee0052e25f1c623d1e6', 18, 'Uniswap V2 (UNI-V2)', 'MAI+USDC'),
+    tokenRewards: Tokens.polygon.QI.token
 }, {
     abi: qiFarmABI,
     address: "0xcc54afcecd0d89e0b2db58f5d9e58468e7ad20dc",
@@ -32,6 +35,7 @@ const qiFarms: ContractStaticInfo[] = [{
     type: ProtocolTypes.Farms,
     chainId: ChainId.Polygon,
     token: new Token(ChainId.Polygon, '0x9a8b2601760814019b7e6ee0052e25f1c623d1e6', 18, 'Uniswap V2 (UNI-V2)', 'QI+WMATIC'),
+    tokenRewards: Tokens.polygon.QI.token
 }]
 
 export default qiFarms;

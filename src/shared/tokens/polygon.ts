@@ -2,7 +2,7 @@ import { Token } from "@uniswap/sdk-core";
 import { TokenInfo } from "../../shared/types/tokens";
 import { ChainId } from "../chains";
 
-const polygonTokens: TokenInfo = {
+const polygon: TokenInfo = {
     FAKE: {
         token: new Token(ChainId.Polygon, '0x580a84c73811e1839f75d86d75d88cca0c241ff4', 18, 'FAKE', 'FAKE DAO'),
         disabled: true,
@@ -18,4 +18,4 @@ const polygonTokens: TokenInfo = {
     },
 };
 
-export default polygonTokens;
+export default polygon;
