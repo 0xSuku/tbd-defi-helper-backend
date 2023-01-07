@@ -1,5 +1,5 @@
 import { Token } from "@uniswap/sdk-core";
-import { TokenInfo } from "../../shared/types";
+import { TokenInfo } from "../../shared/types/tokens";
 import { ChainId } from "../chains";
 
 const nativeTokens: TokenInfo = {

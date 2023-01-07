@@ -1,11 +1,14 @@
 import express, { Application, Request, Response } from 'express';
 import bodyParser from 'body-parser';
-import { Tokens } from './helpers/tokens';
-import { CurrencyAmount, Token } from '@uniswap/sdk-core';
+import { Token } from '@uniswap/sdk-core';
 import erc20 from './helpers/abi/erc20';
 import { ethers } from 'ethers';
-import { ChainId, getProvider } from './helpers/chains';
-import { TokenAmount } from './shared/types';
+import { getProvider } from './shared/chains';
+import { TokenAmount } from './shared/types/tokens';
+import protocolList from './shared/protocols';
+import qiAdapter from './shared/protocols/qidao/qidao-adapter';
+import { Tokens } from './shared/tokens';
+import { Protocol } from './shared/types/protocols';
 
 const app: Application = express();
 
@@ -48,6 +51,19 @@ app.get('/fetchWalletNatives', async (req: Request, res: Response) => {
         
         const amounts: TokenAmount[] = await getNativeBalances(tokens, address);
         res.send(amounts);
+    }
+});
+
+app.get('/fetchWalletProtocols', async (req: Request, res: Response) => {
+    const address = req.query.address;
+    if (address && typeof address === 'string') {
+        const prot = await Promise.all(
+            protocolList.map(async (protocol: Protocol) => {
+                protocol.info.push(await qiAdapter.getFarmInfo(address));
+                return protocol;
+            })
+        );
+        res.send(prot);
     }
 });
 

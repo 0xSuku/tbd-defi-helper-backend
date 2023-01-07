@@ -29,3 +29,8 @@ export function getProvider(chainId: ChainId) {
             return ethers.providers.getDefaultProvider(RPC_ETHEREUM);
     }
 }
+
+export function getReadContract(chainId: ChainId, address: string, abi: string) {
+    const provider = getProvider(chainId);
+    return new ethers.Contract(address, abi, provider);
+}
