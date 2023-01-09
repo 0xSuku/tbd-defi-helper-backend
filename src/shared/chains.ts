@@ -34,3 +34,17 @@ export function getReadContract(chainId: ChainId, address: string, abi: string) 
     const provider = getProvider(chainId);
     return new ethers.Contract(address, abi, provider);
 }
+
+export async function getWriteContract(chainId: ChainId, address: string, abi: string) {
+    const _window = window as any;
+    if (!_window.ethereum) return null;
+
+    if (_window.ethereum.chainId !== chainId) {
+        await _window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x' + chainId.toString(16) }],
+        });
+    }
+    const provider = new ethers.providers.Web3Provider(_window.ethereum);
+    return new ethers.Contract(address, abi, provider.getSigner());
+}

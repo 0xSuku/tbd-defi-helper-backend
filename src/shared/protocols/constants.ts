@@ -6,4 +6,5 @@ export enum Protocols {
 export enum ProtocolTypes {
     Farms,
     Staking,
+    Vesting,
 }

@@ -10,7 +10,7 @@ import qiAdapter from './shared/protocols/qidao/qidao-adapter';
 import { Tokens } from './shared/tokens';
 import { Protocol } from './shared/types/protocols';
 import { Protocols, ProtocolTypes } from './shared/protocols/constants';
-import mummyAdapter from './shared/protocols/mummy/mummy-adapter';
+import gmxAdapter from './shared/protocols/gmx/gmx-adapter';
 
 const app: Application = express();
 
@@ -67,7 +67,7 @@ app.get('/fetchWalletProtocols', async (req: Request, res: Response) => {
                         protocol.info.push(await qiAdapter.getFarmInfo(address));
                         return protocol;
                     case Protocols.Mummy:
-                        protocol.info.push(await mummyAdapter.getStakingInfo(address));
+                        protocol.info.push(await gmxAdapter.getStakingInfo(address));
                         return protocol;
                     default:
                         protocol.info.push({ type: ProtocolTypes.Farms, items: [] });

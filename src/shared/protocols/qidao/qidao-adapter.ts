@@ -1,11 +1,13 @@
 import { CurrencyAmount } from "@uniswap/sdk-core";
-import { getReadContract } from "../../chains";
+import { BigNumber } from "ethers";
+import { getReadContract, getWriteContract } from "../../chains";
 import { ContractStaticInfo, ProtocolInfo } from "../../types/protocols";
 import { ProtocolTypes } from "../constants";
 import qiFarms from "./qidao-farms";
 
 export interface IProtocolAdapter {
     getFarmInfo: (address: string) => Promise<ProtocolInfo>;
+    claimRewards: (contractStaticInfo: ContractStaticInfo) => Promise<void>;
 }
 
 const qiAdapter: IProtocolAdapter = {
@@ -46,6 +48,14 @@ const qiAdapter: IProtocolAdapter = {
             })
         );
         return farms;
+    },
+    claimRewards: async (contractStaticInfo: ContractStaticInfo) => {
+        const contract = await getWriteContract(contractStaticInfo.chainId, contractStaticInfo.address, JSON.stringify(contractStaticInfo.abi));
+        if (contract) {
+            await contract.deposit(BigNumber.from('0'), BigNumber.from('0'));
+        } else {
+            throw Error('Contract not found');
+        }
     }
 }
 export default qiAdapter;
