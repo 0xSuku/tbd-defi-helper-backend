@@ -2,18 +2,31 @@ import { ChainId } from "../../chains";
 import { Tokens } from "../../tokens";
 import { ContractStaticInfo } from "../../types/protocols";
 import { Protocols, ProtocolTypes } from "../constants";
-import { stakerABI, vesterABI } from "./mummy-abis";
+import { fMLPAddress, fMMYAddress, rewardTrackerABI, stakerABI, vesterABI } from "./mummy-abis";
 
 export const mummyFarms: ContractStaticInfo[] = [
     {
         abi: stakerABI,
-        address: "0xffb69477fee0daeb64e7de89b57846afa990e99c",
+        address: Tokens.fantom.sMMY.token.address,
+        name: 'Staked MMY',
+        protocol: Protocols.Mummy,
+        type: ProtocolTypes.Staking,
+        chainId: ChainId.Fantom,
+        token: Tokens.fantom.sMMY.token,
+        tokenRewards: Tokens.fantom.esMMY.token,
+        extraAddresses: [fMMYAddress],
+        extraABIs: [JSON.stringify(rewardTrackerABI)],
+    }, {
+        abi: stakerABI,
+        address: Tokens.fantom.fsMLP.token.address,
         name: 'Staked MLP',
         protocol: Protocols.Mummy,
         type: ProtocolTypes.Staking,
         chainId: ChainId.Fantom,
         token: Tokens.fantom.fsMLP.token,
-        tokenRewards: Tokens.fantom.esMMY.token
+        tokenRewards: Tokens.fantom.esMMY.token,
+        extraAddresses: [fMLPAddress],
+        extraABIs: [JSON.stringify(rewardTrackerABI)],
     }, {
         abi: vesterABI,
         address: Tokens.fantom.vMMY.token.address,

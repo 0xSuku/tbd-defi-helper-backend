@@ -37,4 +37,7 @@ declare type ContractStaticInfo = {
     token: Token;
     tokenRewards: Token;
     hidden?: boolean;
+    extraAddresses?: string[];
+    extraABIs?: string[];
+
 }

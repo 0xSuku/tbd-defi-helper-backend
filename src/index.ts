@@ -1,16 +1,17 @@
 import express, { Application, Request, Response } from 'express';
 import bodyParser from 'body-parser';
-import { Token } from '@uniswap/sdk-core';
 import erc20 from './helpers/abi/erc20';
+import protocolList from './shared/protocols';
+import qiAdapter from './shared/protocols/qidao/qidao-adapter';
+import gmxAdapter from './protocols/gmx/gmx-backend-adapter';
+import { Token } from '@uniswap/sdk-core';
 import { ethers } from 'ethers';
 import { getProvider } from './shared/chains';
 import { TokenAmount } from './shared/types/tokens';
-import protocolList from './shared/protocols';
-import qiAdapter from './shared/protocols/qidao/qidao-adapter';
 import { Tokens } from './shared/tokens';
 import { Protocol } from './shared/types/protocols';
 import { Protocols, ProtocolTypes } from './shared/protocols/constants';
-import gmxAdapter from './shared/protocols/gmx/gmx-adapter';
+import { mummyFarms } from './shared/protocols/mummy/mummy-farms';
 
 const app: Application = express();
 
@@ -27,13 +28,20 @@ app.get('/fetchWalletTokens', async (req: Request, res: Response) => {
     const address = req.query.address;
     if (address && typeof address === 'string') {
         const tokens: Token[] = [];
-        const keys = Object.keys(Tokens.polygon);
-        for (const key of keys) {
-            const currentTokenDetails = Tokens.polygon[key];
-            if (!currentTokenDetails.disabled) {
-                tokens.push(currentTokenDetails.token);
+        const keysChains = Object.keys(Tokens);
+        for (const keysChain of keysChains) {
+            if (keysChain === 'nativeTokens') continue;
+
+            const currentTokensChain = Tokens[keysChain];
+            const keys = Object.keys(currentTokensChain);
+            for (const key of keys) {
+                const currentTokenDetails = currentTokensChain[key];
+                if (!currentTokenDetails.disabled) {
+                    tokens.push(currentTokenDetails.token);
+                }
             }
         }
+
         const amounts: TokenAmount[] = await getBalances(tokens, address);
         res.send(amounts);
     }
@@ -64,10 +72,18 @@ app.get('/fetchWalletProtocols', async (req: Request, res: Response) => {
                 protocol.info = [];
                 switch (protocol.symbol) {
                     case Protocols.Qi_Dao:
-                        protocol.info.push(await qiAdapter.getFarmInfo(address));
+                        protocol.info.push(
+                            await qiAdapter.getFarmInfo(address)
+                        );
                         return protocol;
                     case Protocols.Mummy:
-                        protocol.info.push(await gmxAdapter.getStakingInfo(address));
+                        protocol.info.push(
+                            await gmxAdapter.getStakingInfo(
+                                address,
+                                mummyFarms,
+                                Tokens.fantom.WFTM.token
+                            )
+                        );
                         return protocol;
                     default:
                         protocol.info.push({ type: ProtocolTypes.Farms, items: [] });
