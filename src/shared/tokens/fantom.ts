@@ -14,6 +14,11 @@ const fantom: TokenInfo = {
         disabled: true,
         tokenInfo: TokenTypes.UNUSED,
     },
+    vMLP: {
+        token: new Token(ChainId.Fantom, '0x2a3e489f713ab6f652af930555b5bb3422711ac1', 18, 'vMLP', 'Vested MLP'),
+        disabled: true,
+        tokenInfo: TokenTypes.UNUSED,
+    },
     sbfMMY: {
         token: new Token(ChainId.Fantom, '0xe149164d8eca659e8912dbdec35e3f7e71fb5789', 18, 'sbfMMY', 'Staked + Bonus + Fee MMY'),
         disabled: true,
@@ -26,11 +31,6 @@ const fantom: TokenInfo = {
     },
     sMMY: {
         token: new Token(ChainId.Fantom, '0x727dB8FA7861340d49d13ea78321D0C9a1a79cd5', 18, 'sMMY', 'Staked MMY'),
-        disabled: true,
-        tokenInfo: TokenTypes.UNUSED,
-    },
-    vMLP: {
-        token: new Token(ChainId.Fantom, '0x2a3e489f713ab6f652af930555b5bb3422711ac1', 18, 'vMLP', 'Vested MLP'),
         disabled: true,
         tokenInfo: TokenTypes.UNUSED,
     },

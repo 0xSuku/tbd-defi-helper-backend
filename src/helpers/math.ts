@@ -1,5 +1,7 @@
 import { BigNumber, ethers } from "ethers";
 import Big from 'big.js';
+import { tokenTypesData } from "../shared/constants/token";
+import { CoingeckoResponse, TokenDetails } from "../shared/types/tokens";
 
 export function multiplyBNxBN(amount: BigNumber, mul: BigNumber, mulDecimals: number): BigNumber {
 	const mulNumber = Number(ethers.utils.formatUnits(mul, mulDecimals).substring(0, 16));
@@ -24,4 +26,13 @@ export function toFixedTrunc6Digits(number: string) {
 	} else {
 		throw 'error';
 	}
+}
+
+export function fetchUsdValue(coingeckoResponse: CoingeckoResponse, tokenDetails: TokenDetails, farmingRewards: any) {
+    const priceCG = coingeckoResponse[tokenTypesData[tokenDetails.tokenInfo].coingeckoName];
+    const price = priceCG.usd;
+    const usdValueBN = multiplyBN(farmingRewards, price);
+    const usdValueString = ethers.utils.formatUnits(usdValueBN, tokenDetails.token.decimals);
+    const usdValue = toFixedTrunc6Digits(usdValueString);
+    return { price, usdValue };
 }

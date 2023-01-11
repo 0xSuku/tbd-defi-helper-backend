@@ -12,8 +12,11 @@ export const mummyFarms: ContractStaticInfo[] = [
         protocol: Protocols.Mummy,
         type: ProtocolTypes.Staking,
         chainId: ChainId.Fantom,
-        token: Tokens.fantom.sMMY.token,
-        tokenRewards: Tokens.fantom.esMMY.token,
+        tokenDetail: Tokens.fantom.sMMY,
+        tokensDetailRewards: [
+            Tokens.fantom.esMMY,
+            Tokens.fantom.WFTM,
+        ],
         extraAddresses: [fMMYAddress],
         extraABIs: [JSON.stringify(rewardTrackerABI)],
     }, {
@@ -23,8 +26,11 @@ export const mummyFarms: ContractStaticInfo[] = [
         protocol: Protocols.Mummy,
         type: ProtocolTypes.Staking,
         chainId: ChainId.Fantom,
-        token: Tokens.fantom.fsMLP.token,
-        tokenRewards: Tokens.fantom.esMMY.token,
+        tokenDetail: Tokens.fantom.fsMLP,
+        tokensDetailRewards: [
+            Tokens.fantom.esMMY,
+            Tokens.fantom.WFTM,
+        ],
         extraAddresses: [fMLPAddress],
         extraABIs: [JSON.stringify(rewardTrackerABI)],
     }, {
@@ -34,8 +40,8 @@ export const mummyFarms: ContractStaticInfo[] = [
         protocol: Protocols.Mummy,
         type: ProtocolTypes.Vesting,
         chainId: ChainId.Fantom,
-        token: Tokens.fantom.vMMY.token,
-        tokenRewards: Tokens.fantom.MMY.token
+        tokenDetail: Tokens.fantom.vMMY,
+        tokensDetailRewards: [Tokens.fantom.MMY]
     }, {
         abi: vesterABI,
         address: Tokens.fantom.vMLP.token.address,
@@ -43,7 +49,7 @@ export const mummyFarms: ContractStaticInfo[] = [
         protocol: Protocols.Mummy,
         type: ProtocolTypes.Vesting,
         chainId: ChainId.Fantom,
-        token: Tokens.fantom.vMLP.token,
-        tokenRewards: Tokens.fantom.MMY.token
+        tokenDetail: Tokens.fantom.vMLP,
+        tokensDetailRewards: [Tokens.fantom.MMY]
     }
 ]

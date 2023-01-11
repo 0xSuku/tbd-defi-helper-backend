@@ -2,14 +2,15 @@ import { CurrencyAmount, Token } from "@uniswap/sdk-core";
 import { getReadContract } from "../../shared/chains";
 import { ContractStaticInfo, ProtocolInfo } from "../../shared/types/protocols";
 import { ProtocolTypes } from "../../shared/protocols/constants";
+import { getCoingeckoPricesFromTokenDetails } from "../../helpers/common";
+import { fetchUsdValue } from "../../helpers/math";
 
 export interface IProtocolAdapter {
-    getStakingInfo: (address: string, gmxFarms: ContractStaticInfo[], nativeToken?: Token) => Promise<ProtocolInfo>;
+    getStakingInfo: (address: string, gmxFarms: ContractStaticInfo[]) => Promise<ProtocolInfo>;
 }
 
 const gmxAdapter: IProtocolAdapter = {
-    getStakingInfo: async (address: string, gmxFarms: ContractStaticInfo[], nativeToken?: Token) => {
-        if (!nativeToken) throw new Error('Should have the native token set');
+    getStakingInfo: async (address: string, gmxFarms: ContractStaticInfo[]) => {
 
         let deposits: ProtocolInfo = {
             type: ProtocolTypes.Farms,
@@ -27,35 +28,68 @@ const gmxAdapter: IProtocolAdapter = {
                                 if (!contractStaticInfo.extraAddresses) throw new Error('Should have the fees address');
                                 if (!contractStaticInfo.extraABIs) throw new Error('Should have the fees ABIs');
 
+                                const coingeckoResponse = await getCoingeckoPricesFromTokenDetails([
+                                    contractStaticInfo.tokensDetailRewards[0],
+                                    contractStaticInfo.tokensDetailRewards[1]
+                                ]);
+
                                 const staked = await stakeContract.stakedAmounts(address);
-                                const stakedCA = CurrencyAmount.fromRawAmount(contractStaticInfo.token, staked);
-                                const depositBalance = stakedCA.toExact();
+                                const stakedCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokenDetail.token, staked);
+                                const stakedExact = stakedCA.toExact();
 
                                 const stakingRewards = await stakeContract.claimable(address);
-                                const stakingRewardsCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokenRewards, stakingRewards);
-                                const rewardBalance = stakingRewardsCA.toExact();
+                                const stakingRewardsCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokensDetailRewards[0].token, stakingRewards);
+                                const stakingRewardsExact = stakingRewardsCA.toExact();
+
+                                let stakingRewardsUsdValue = 0;
+                                let stakingRewardsPrice = 0;
+                                if (staked.gt(0)) {
+                                    ({ price: stakingRewardsPrice, usdValue: stakingRewardsUsdValue } = fetchUsdValue(
+                                        coingeckoResponse,
+                                        contractStaticInfo.tokensDetailRewards[0],
+                                        stakingRewards
+                                    ));
+                                }
 
                                 const stakeFeesContract = getReadContract(contractStaticInfo.chainId, contractStaticInfo.extraAddresses[0], contractStaticInfo.extraABIs[0]);
                                 const feeStakingRewards = await stakeFeesContract.claimable(address);
-                                const feeStakingRewardsCA = CurrencyAmount.fromRawAmount(nativeToken, feeStakingRewards);
-                                const rewardBalance2 = feeStakingRewardsCA.toExact();
+                                const feeStakingRewardsCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokensDetailRewards[1].token, feeStakingRewards);
+                                const feeStakingRewardsExact = feeStakingRewardsCA.toExact();
 
-                                deposits.items?.push({
-                                    balance: [{
-                                        amount: depositBalance,
-                                        currency: contractStaticInfo.token
-                                    }],
-                                    pool: [contractStaticInfo.token],
-                                    rewards: [{
-                                        amount: rewardBalance,
-                                        currency: contractStaticInfo.tokenRewards
-                                    }, {
-                                        amount: rewardBalance2,
-                                        currency: nativeToken
-                                    }],
-                                    usdValue: 0,
-                                    address: contractStaticInfo.address
-                                });
+                                let feeStakingRewardsUsdValue = 0;
+                                let feeStakingRewardsPrice = 0;
+                                if (staked.gt(0)) {
+                                    ({ price: feeStakingRewardsPrice, usdValue: feeStakingRewardsUsdValue } = fetchUsdValue(
+                                        coingeckoResponse,
+                                        contractStaticInfo.tokensDetailRewards[1],
+                                        feeStakingRewards
+                                    ));
+                                }
+
+                                if (staked.gt(0)) {
+                                    deposits.items?.push({
+                                        balance: [{
+                                            amount: stakedExact,
+                                            tokenDetail: contractStaticInfo.tokenDetail,
+                                            price: 0,
+                                            usdValue: 0
+                                        }],
+                                        pool: [contractStaticInfo.tokenDetail],
+                                        rewards: [{
+                                            amount: stakingRewardsExact,
+                                            tokenDetail: contractStaticInfo.tokensDetailRewards[0],
+                                            price: stakingRewardsPrice,
+                                            usdValue: stakingRewardsUsdValue
+                                        }, {
+                                            amount: feeStakingRewardsExact,
+                                            tokenDetail: contractStaticInfo.tokensDetailRewards[1],
+                                            price: feeStakingRewardsPrice,
+                                            usdValue: feeStakingRewardsUsdValue
+                                        }],
+                                        usdValue: 0,
+                                        address: contractStaticInfo.address
+                                    });
+                                }
 
                             } catch (error) {
                                 debugger;
@@ -63,34 +97,49 @@ const gmxAdapter: IProtocolAdapter = {
                             break;
                         case ProtocolTypes.Vesting:
                             try {
-                                // const vested = await stakeContract.getVestedAmount(address);
-                                // const vestedCA = CurrencyAmount.fromRawAmount(contractStaticInfo.token, vested);
-                                // const depositBalance = vestedCA.toExact();
-                                
+                                const coingeckoResponse = await getCoingeckoPricesFromTokenDetails([
+                                    contractStaticInfo.tokensDetailRewards[0]
+                                ]);
                                 const vestedRewardsBalance = await stakeContract.balanceOf(address);
-                                const vestedRewardsBalanceCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokenRewards, vestedRewardsBalance);
+                                const vestedRewardsBalanceCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokensDetailRewards[0].token, vestedRewardsBalance);
 
                                 const vestedRewards = await stakeContract.claimable(address);
-                                const vestedRewardsCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokenRewards, vestedRewards);
+                                const vestedRewardsCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokensDetailRewards[0].token, vestedRewards);
                                 const vestedRewardsExact = vestedRewardsCA.toExact();
 
-                                const vestedBalance =vestedRewardsBalanceCA.subtract(vestedRewardsCA);
+                                let vestedRewardsUsdValue = 0;
+                                let vestedRewardsPrice = 0;
+                                if (vestedRewardsBalance.gt(0)) {
+                                    ({ price: vestedRewardsPrice, usdValue: vestedRewardsUsdValue } = fetchUsdValue(
+                                        coingeckoResponse,
+                                        contractStaticInfo.tokensDetailRewards[0],
+                                        vestedRewards
+                                    ));
+                                }
+
+                                const vestedBalance = vestedRewardsBalanceCA.subtract(vestedRewardsCA);
                                 const vestedBalanceExact = vestedBalance.toExact();
 
 
-                                deposits.items?.push({
-                                    balance: [{
-                                        amount: vestedBalanceExact,
-                                        currency: contractStaticInfo.token
-                                    }],
-                                    pool: [contractStaticInfo.token],
-                                    rewards: [{
-                                        amount: vestedRewardsExact,
-                                        currency: contractStaticInfo.tokenRewards
-                                    }],
-                                    usdValue: 0,
-                                    address: contractStaticInfo.address
-                                });
+                                if (vestedRewardsBalance.gt(0)) {
+                                    deposits.items?.push({
+                                        balance: [{
+                                            amount: vestedBalanceExact,
+                                            tokenDetail: contractStaticInfo.tokenDetail,
+                                            price: 0,
+                                            usdValue: 0
+                                        }],
+                                        pool: [contractStaticInfo.tokenDetail],
+                                        rewards: [{
+                                            amount: vestedRewardsExact,
+                                            tokenDetail: contractStaticInfo.tokensDetailRewards[0],
+                                            price: vestedRewardsPrice,
+                                            usdValue: vestedRewardsUsdValue
+                                        }],
+                                        usdValue: 0,
+                                        address: contractStaticInfo.address
+                                    });
+                                }
                             } catch (error) {
                                 debugger;
                             }

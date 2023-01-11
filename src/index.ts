@@ -1,7 +1,7 @@
 import express, { Application, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import protocolList from './shared/protocols';
-import qiAdapter from './shared/protocols/qidao/qidao-adapter';
+import qiAdapter from './protocols/qidao/qidao-backend-adapter';
 import gmxAdapter from './protocols/gmx/gmx-backend-adapter';
 import { TokenAmount, TokenDetails } from './shared/types/tokens';
 import { Tokens } from './shared/tokens';
@@ -76,8 +76,7 @@ app.get('/fetchWalletProtocols', async (req: Request, res: Response) => {
                         protocol.info.push(
                             await gmxAdapter.getStakingInfo(
                                 address,
-                                mummyFarms,
-                                Tokens.fantom.WFTM.token
+                                mummyFarms
                             )
                         );
                         return protocol;

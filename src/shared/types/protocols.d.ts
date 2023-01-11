@@ -1,16 +1,11 @@
-import { Token } from '@uniswap/sdk-core'
 import { ChainId } from '../chains';
 import { Protocols, ProtocolTypes } from '../protocols/constants';
-
-declare type CurrencyAmountHttp = {
-    amount: string;
-    currency: Token;
-}
+import { TokenAmount, TokenDetails } from './tokens';
 
 declare type ProtocolItem = {
-    pool: Token[];
-    balance: CurrencyAmountHttp[];
-    rewards?: CurrencyAmountHttp[];
+    pool: TokenDetails[];
+    balance: TokenAmount[];
+    rewards?: TokenAmount[];
     usdValue: number;
     address: string;
 }
@@ -34,8 +29,8 @@ declare type ContractStaticInfo = {
     protocol: Protocols;
     type: ProtocolTypes;
     chainId: ChainId;
-    token: Token;
-    tokenRewards: Token;
+    tokenDetail: TokenDetails;
+    tokensDetailRewards: TokenDetails[];
     hidden?: boolean;
     extraAddresses?: string[];
     extraABIs?: string[];

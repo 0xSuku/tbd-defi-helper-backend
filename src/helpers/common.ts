@@ -9,7 +9,7 @@ import { multiplyBN, toFixedTrunc6Digits } from "./math";
 
 
 export async function getTokenBalances(tokensDetails: TokenDetails[], address: string): Promise<TokenAmount[]> {
-    const coingeckoResponse = await getCoingeckoPrices(tokensDetails);
+    const coingeckoResponse = await getCoingeckoPricesFromTokenDetails(tokensDetails);
     let amounts: TokenAmount[] = await Promise.all(tokensDetails.map(async tokenDetail => {
         const tokenContract = new ethers.Contract(tokenDetail.token.address, erc20, getProvider(tokenDetail.token.chainId));
         const balanceBN = await tokenContract.balanceOf(address);
@@ -29,7 +29,7 @@ export async function getTokenBalances(tokensDetails: TokenDetails[], address: s
 }
 
 export async function getNativeBalances(tokensDetails: TokenDetails[], address: string): Promise<TokenAmount[]> {
-    const coingeckoResponse = await getCoingeckoPrices(tokensDetails);
+    const coingeckoResponse = await getCoingeckoPricesFromTokenDetails(tokensDetails);
     const amounts: TokenAmount[] = await Promise.all(tokensDetails.map(async tokenDetail => {
         const provider = getProvider(tokenDetail.token.chainId);
         const balanceBN = await provider.getBalance(address);
@@ -50,8 +50,12 @@ export async function getNativeBalances(tokensDetails: TokenDetails[], address: 
     return amounts;
 }
 
-export async function getCoingeckoPrices(tokenDetails: TokenDetails[]): Promise<CoingeckoResponse> {
+export async function getCoingeckoPricesFromTokenDetails(tokenDetails: TokenDetails[]): Promise<CoingeckoResponse> {
     const coingeckoIds = tokenDetails.map(td => tokenTypesData[td.tokenInfo].coingeckoName);
+    return getCoingeckoPrices(coingeckoIds);
+}
+
+export async function getCoingeckoPrices(coingeckoIds: string[]): Promise<CoingeckoResponse> {
     const request = { ids: '', vs_currencies: 'usd' };
     for (const id of coingeckoIds) {
         request.ids += id + ',';
