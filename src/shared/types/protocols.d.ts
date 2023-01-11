@@ -39,5 +39,4 @@ declare type ContractStaticInfo = {
     hidden?: boolean;
     extraAddresses?: string[];
     extraABIs?: string[];
-
 }
