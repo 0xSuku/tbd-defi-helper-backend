@@ -17,7 +17,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const cors = require('cors');
 app.use(cors());
-fetchCoingeckoPrices();
+setInterval(() => fetchCoingeckoPrices(), 10000);
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Healthy');
