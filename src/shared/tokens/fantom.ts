@@ -47,7 +47,7 @@ const fantom: TokenInfo = {
         tokenInfo: TokenTypes.MMY,
     },
     USDC: {
-        token: new Token(ChainId.Fantom, '0x04068da6c83afcfa0e13ba15a6696662335d5b75', 18, 'USDC', 'USDC'),
+        token: new Token(ChainId.Fantom, '0x04068da6c83afcfa0e13ba15a6696662335d5b75', 6, 'USDC', 'USDC'),
         tokenInfo: TokenTypes.USDC,
     },
     WBNB: {

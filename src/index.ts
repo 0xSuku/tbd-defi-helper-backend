@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import protocolList from './shared/protocols';
 import qiAdapter from './protocols/qidao/qidao-backend-adapter';
 import gmxAdapter from './protocols/gmx/gmx-backend-adapter';
+import cors from 'cors';
 import { TokenAmount, TokenDetails } from './shared/types/tokens';
 import { Tokens } from './shared/tokens';
 import { Protocol } from './shared/types/protocols';
@@ -15,9 +16,9 @@ const app: Application = express();
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-const cors = require('cors');
 app.use(cors());
-setInterval(() => fetchCoingeckoPrices(), 10000);
+fetchCoingeckoPrices();
+setInterval(() => fetchCoingeckoPrices(), 30000);
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Healthy');
@@ -106,5 +107,5 @@ app.get('/fetchWalletProtocols', async (req: Request, res: Response) => {
 const PORT = process.env.PORT || 8000;
 
 app.listen(PORT, () => {
-    console.log(`Server is running on PORT ${PORT}`);
+    console.log("Server listening on: http://localhost:%s", PORT);
 });
