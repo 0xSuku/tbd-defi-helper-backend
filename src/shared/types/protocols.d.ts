@@ -18,6 +18,7 @@ declare type ProtocolInfo = {
 declare type Protocol = {
     info: ProtocolInfo[];
     symbol: Protocols;
+    chainId: ChainId;
     name: string;
 }
 

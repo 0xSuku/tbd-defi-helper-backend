@@ -15,6 +15,7 @@ export enum ChainId {
     Ethereum = 1,
     Polygon = 137,
     Fantom = 250,
+    Arbitrum = 42161,
 }
 
 export function getProvider(chainId: ChainId) {
@@ -25,8 +26,10 @@ export function getProvider(chainId: ChainId) {
             return ethers.providers.getDefaultProvider(RPC_ETHEREUM);
         case ChainId.Fantom:
             return ethers.providers.getDefaultProvider(RPC_FTM);
+        case ChainId.Arbitrum:
+            return ethers.providers.getDefaultProvider(RPC_ARBITRUM);
         default:
-            return ethers.providers.getDefaultProvider(RPC_ETHEREUM);
+            throw new Error('Provider not implemented');
     }
 }
 

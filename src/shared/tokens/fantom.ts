@@ -27,12 +27,12 @@ const fantom: TokenInfo = {
     vMMY: {
         token: new Token(ChainId.Fantom, '0xa1a65d3639a1efbfb18c82003330a4b1fb620c5a', 18, 'vMMY', 'Vested MMY'),
         disabled: true,
-        tokenInfo: TokenTypes.UNUSED,
+        tokenInfo: TokenTypes.MMY,
     },
     sMMY: {
         token: new Token(ChainId.Fantom, '0x727dB8FA7861340d49d13ea78321D0C9a1a79cd5', 18, 'sMMY', 'Staked MMY'),
         disabled: true,
-        tokenInfo: TokenTypes.UNUSED,
+        tokenInfo: TokenTypes.MMY,
     },
     WFTM: {
         token: new Token(ChainId.Fantom, '0x21be370D5312f44cB42ce377BC9b8a0cEF1A4C83', 18, 'WFTM', 'Wrapped FTM'),

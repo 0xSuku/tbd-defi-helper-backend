@@ -8,7 +8,8 @@ import { Tokens } from './shared/tokens';
 import { Protocol } from './shared/types/protocols';
 import { Protocols, ProtocolTypes } from './shared/protocols/constants';
 import { mummyFarms } from './shared/protocols/mummy/mummy-farms';
-import { getTokenBalances, getNativeBalances } from './helpers/common';
+import { getTokenBalances, getNativeBalances, fetchCoingeckoPrices } from './helpers/common';
+import { gmxFarms } from './shared/protocols/gmx/gmx-farms';
 
 const app: Application = express();
 
@@ -16,6 +17,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 const cors = require('cors');
 app.use(cors());
+fetchCoingeckoPrices();
 
 app.get('/', (req: Request, res: Response) => {
     res.send('Healthy');
@@ -68,17 +70,28 @@ app.get('/fetchWalletProtocols', async (req: Request, res: Response) => {
                 protocol.info = [];
                 switch (protocol.symbol) {
                     case Protocols.Qi_Dao:
-                        protocol.info.push(
-                            await qiAdapter.getFarmInfo(address)
-                        );
+                        const qiDaoInfo = await qiAdapter.getFarmInfo(address);
+                        if (qiDaoInfo.items?.length)
+                            protocol.info.push(qiDaoInfo);
+
                         return protocol;
                     case Protocols.Mummy:
-                        protocol.info.push(
-                            await gmxAdapter.getStakingInfo(
-                                address,
-                                mummyFarms
-                            )
+                        const mummyInfo = await gmxAdapter.getStakingInfo(
+                            address,
+                            mummyFarms
                         );
+                        if (mummyInfo.items?.length)
+                            protocol.info.push(mummyInfo);
+
+                        return protocol;
+                    case Protocols.GMX:
+                        const gmxInfo = await gmxAdapter.getStakingInfo(
+                            address,
+                            gmxFarms
+                        )
+                        if (gmxInfo.items?.length)
+                            protocol.info.push(gmxInfo);
+
                         return protocol;
                     default:
                         protocol.info.push({ type: ProtocolTypes.Farms, items: [] });

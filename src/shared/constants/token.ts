@@ -4,7 +4,6 @@ export enum TokenTypes {
 	BUSD = 'BUSD',
 	USDT = 'USDT',
 	USDC = 'USDC',
-
 	BNB = 'BNB',
 	ETH = 'ETH',
 	MATIC = 'MATIC',
@@ -12,7 +11,6 @@ export enum TokenTypes {
 	ADA = 'ADA',
 	FTM = 'FTM',
 	AVAX = 'AVAX',
-
 	MAI = 'MAI',
 	CRV = 'CRV',
 	QI = 'QI',
@@ -23,6 +21,8 @@ export enum TokenTypes {
 	SNX = 'SNX',
 	KNC = 'KNC',
 	MMY = 'MMY',
+	GMX = 'GMX',
+	esGMX = 'esGMX',
 }
 
 export interface TokenTypesData {
@@ -118,5 +118,13 @@ export const tokenTypesData: Record<TokenTypes, TokenTypesData> = {
 	'MMY': {
 		isStable: false,
 		coingeckoName: 'mummy-finance'
+	},
+	'GMX': {
+		isStable: false,
+		coingeckoName: 'gmx'
+	},
+	'esGMX': {
+		isStable: false,
+		coingeckoName: 'gmx'
 	}
 }

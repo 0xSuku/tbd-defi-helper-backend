@@ -68,6 +68,7 @@
     "side-channel": "^1.0.4",
     "statuses": "^2.0.1",
     "toidentifier": "^1.0.1",
+    "ts-node": "^10.9.1",
     "type-is": "^1.6.18",
     "unpipe": "^1.0.0",
     "utils-merge": "^1.0.1",
@@ -75,7 +76,8 @@
   },
   "scripts": {
     "prebuild": "tslint -c tslint.json -p tsconfig.json --fix",
-    "start": "tsc && node ."
+    "start": "tsc && node .",
+    "getGMXContracts": "node -r ts-node/register --inspect  ./src/scripts/gmx-fork-contracts.ts"
   },
   "keywords": [],
   "author": "",

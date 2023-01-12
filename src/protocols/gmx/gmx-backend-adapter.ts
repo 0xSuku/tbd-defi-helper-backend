@@ -4,6 +4,7 @@ import { ContractStaticInfo, ProtocolInfo } from "../../shared/types/protocols";
 import { ProtocolTypes } from "../../shared/protocols/constants";
 import { getCoingeckoPricesFromTokenDetails } from "../../helpers/common";
 import { fetchUsdValue } from "../../helpers/math";
+import { BigNumber, ethers } from "ethers";
 
 export interface IProtocolAdapter {
     getStakingInfo: (address: string, gmxFarms: ContractStaticInfo[]) => Promise<ProtocolInfo>;
@@ -19,7 +20,6 @@ const gmxAdapter: IProtocolAdapter = {
 
         await Promise.all(
             gmxFarms.map(async (contractStaticInfo: ContractStaticInfo) => {
-
                 const stakeContract = getReadContract(contractStaticInfo.chainId, contractStaticInfo.address, JSON.stringify(contractStaticInfo.abi));
                 if (stakeContract) {
                     switch (contractStaticInfo.type) {
@@ -29,6 +29,7 @@ const gmxAdapter: IProtocolAdapter = {
                                 if (!contractStaticInfo.extraABIs) throw new Error('Should have the fees ABIs');
 
                                 const coingeckoResponse = await getCoingeckoPricesFromTokenDetails([
+                                    contractStaticInfo.tokenDetail,
                                     contractStaticInfo.tokensDetailRewards[0],
                                     contractStaticInfo.tokensDetailRewards[1]
                                 ]);
@@ -36,6 +37,16 @@ const gmxAdapter: IProtocolAdapter = {
                                 const staked = await stakeContract.stakedAmounts(address);
                                 const stakedCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokenDetail.token, staked);
                                 const stakedExact = stakedCA.toExact();
+
+                                let stakedUsdValue = 0;
+                                let stakedPrice = 0;
+                                if (staked.gt(0)) {
+                                    ({ price: stakedPrice, usdValue: stakedUsdValue } = fetchUsdValue(
+                                        coingeckoResponse,
+                                        contractStaticInfo.tokenDetail,
+                                        staked
+                                    ));
+                                }
 
                                 const stakingRewards = await stakeContract.claimable(address);
                                 const stakingRewardsCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokensDetailRewards[0].token, stakingRewards);
@@ -71,8 +82,8 @@ const gmxAdapter: IProtocolAdapter = {
                                         balance: [{
                                             amount: stakedExact,
                                             tokenDetail: contractStaticInfo.tokenDetail,
-                                            price: 0,
-                                            usdValue: 0
+                                            price: stakedPrice,
+                                            usdValue: stakedUsdValue
                                         }],
                                         pool: [contractStaticInfo.tokenDetail],
                                         rewards: [{
@@ -98,6 +109,7 @@ const gmxAdapter: IProtocolAdapter = {
                         case ProtocolTypes.Vesting:
                             try {
                                 const coingeckoResponse = await getCoingeckoPricesFromTokenDetails([
+                                    contractStaticInfo.tokenDetail,
                                     contractStaticInfo.tokensDetailRewards[0]
                                 ]);
                                 const vestedRewardsBalance = await stakeContract.balanceOf(address);
@@ -117,8 +129,19 @@ const gmxAdapter: IProtocolAdapter = {
                                     ));
                                 }
 
-                                const vestedBalance = vestedRewardsBalanceCA.subtract(vestedRewardsCA);
-                                const vestedBalanceExact = vestedBalance.toExact();
+                                const vestedBalanceCA = vestedRewardsBalanceCA.subtract(vestedRewardsCA);
+                                const vestedBalanceExact = vestedBalanceCA.toExact();
+                                const vestedBalance = ethers.utils.parseUnits(vestedBalanceExact, contractStaticInfo.tokensDetailRewards[0].token.decimals);
+
+                                let vestedUsdValue = 0;
+                                let vestedPrice = 0;
+                                if (vestedRewardsBalance.gt(0)) {
+                                    ({ price: vestedPrice, usdValue: vestedUsdValue } = fetchUsdValue(
+                                        coingeckoResponse,
+                                        contractStaticInfo.tokenDetail,
+                                        vestedBalance
+                                    ));
+                                }
 
 
                                 if (vestedRewardsBalance.gt(0)) {
@@ -126,8 +149,8 @@ const gmxAdapter: IProtocolAdapter = {
                                         balance: [{
                                             amount: vestedBalanceExact,
                                             tokenDetail: contractStaticInfo.tokenDetail,
-                                            price: 0,
-                                            usdValue: 0
+                                            price: vestedPrice,
+                                            usdValue: vestedUsdValue
                                         }],
                                         pool: [contractStaticInfo.tokenDetail],
                                         rewards: [{
