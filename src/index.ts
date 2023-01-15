@@ -79,7 +79,8 @@ app.get('/fetchWalletProtocols', async (req: Request, res: Response) => {
                     case Protocols.Mummy:
                         const mummyInfo = await gmxAdapter.getStakingInfo(
                             address,
-                            mummyFarms
+                            mummyFarms,
+                            '0xA6D7D0e650aa40FFa42d845A354c12c2bc0aB15f'
                         );
                         if (mummyInfo.items?.length)
                             protocol.info.push(mummyInfo);
@@ -88,7 +89,8 @@ app.get('/fetchWalletProtocols', async (req: Request, res: Response) => {
                     case Protocols.GMX:
                         const gmxInfo = await gmxAdapter.getStakingInfo(
                             address,
-                            gmxFarms
+                            gmxFarms,
+                            '0x489ee077994b6658eafa855c308275ead8097c4a'
                         )
                         if (gmxInfo.items?.length)
                             protocol.info.push(gmxInfo);

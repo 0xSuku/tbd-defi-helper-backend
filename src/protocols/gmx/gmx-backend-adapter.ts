@@ -1,41 +1,44 @@
 import { CurrencyAmount, Token } from "@uniswap/sdk-core";
 import { getReadContract } from "../../shared/chains";
-import { ContractStaticInfo, ProtocolInfo } from "../../shared/types/protocols";
+import { ContractStaticInfo, ProtocolDeposit, ProtocolInfo } from "../../shared/types/protocols";
 import { ProtocolTypes } from "../../shared/protocols/constants";
 import { getCoingeckoPricesFromTokenDetails } from "../../helpers/common";
 import { fetchUsdValue } from "../../helpers/math";
 import { BigNumber, ethers } from "ethers";
+import { GmxStakeDepositInfo, GmxVestDepositInfo } from "../../shared/protocols/entities/deposit";
+import { rewardTrackerABI } from "../../shared/protocols/abi/base/gmx-abis";
 
 export interface IProtocolAdapter {
-    getStakingInfo: (address: string, gmxFarms: ContractStaticInfo[]) => Promise<ProtocolInfo>;
+    getStakingInfo: (address: string, gmxFarms: ProtocolDeposit[], glpDepositContract: string) => Promise<ProtocolInfo>;
 }
 
 const gmxAdapter: IProtocolAdapter = {
-    getStakingInfo: async (address: string, gmxFarms: ContractStaticInfo[]) => {
-
+    getStakingInfo: async (address: string, gmxFarms: ProtocolDeposit[], glpDepositContract: string) => {
+        
         let deposits: ProtocolInfo = {
             type: ProtocolTypes.Farms,
             items: []
         };
 
         await Promise.all(
-            gmxFarms.map(async (contractStaticInfo: ContractStaticInfo) => {
-                const stakeContract = getReadContract(contractStaticInfo.chainId, contractStaticInfo.address, JSON.stringify(contractStaticInfo.abi));
+            gmxFarms.map(async (protocolDeposit: ProtocolDeposit) => {
+                const stakeContract = getReadContract(protocolDeposit.chainId, protocolDeposit.address, JSON.stringify(protocolDeposit.abi));
                 if (stakeContract) {
-                    switch (contractStaticInfo.type) {
+                    switch (protocolDeposit.type) {
                         case ProtocolTypes.Staking:
                             try {
-                                if (!contractStaticInfo.extraAddresses) throw new Error('Should have the fees address');
-                                if (!contractStaticInfo.extraABIs) throw new Error('Should have the fees ABIs');
+                                const stakeDeposit = protocolDeposit as GmxStakeDepositInfo;
+                                if (!stakeDeposit.feeStakeTokenAddress) throw new Error('Should have the fees address');
+                                if (!stakeDeposit.tokenFeeRewards) throw new Error('Should have the fees rewards token');
 
                                 const coingeckoResponse = await getCoingeckoPricesFromTokenDetails([
-                                    contractStaticInfo.tokenDetail,
-                                    contractStaticInfo.tokensDetailRewards[0],
-                                    contractStaticInfo.tokensDetailRewards[1]
+                                    stakeDeposit.tokenDetails,
+                                    stakeDeposit.tokenDetailsRewards,
+                                    stakeDeposit.tokenFeeRewards
                                 ]);
 
                                 const staked = await stakeContract.stakedAmounts(address);
-                                const stakedCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokenDetail.token, staked);
+                                const stakedCA = CurrencyAmount.fromRawAmount(stakeDeposit.tokenDetails.token, staked);
                                 const stakedExact = stakedCA.toExact();
 
                                 let stakedUsdValue = 0;
@@ -43,13 +46,13 @@ const gmxAdapter: IProtocolAdapter = {
                                 if (staked.gt(0)) {
                                     ({ price: stakedPrice, usdValue: stakedUsdValue } = fetchUsdValue(
                                         coingeckoResponse,
-                                        contractStaticInfo.tokenDetail,
+                                        stakeDeposit.tokenDetails,
                                         staked
                                     ));
                                 }
 
                                 const stakingRewards = await stakeContract.claimable(address);
-                                const stakingRewardsCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokensDetailRewards[0].token, stakingRewards);
+                                const stakingRewardsCA = CurrencyAmount.fromRawAmount(stakeDeposit.tokenDetailsRewards.token, stakingRewards);
                                 const stakingRewardsExact = stakingRewardsCA.toExact();
 
                                 let stakingRewardsUsdValue = 0;
@@ -57,14 +60,14 @@ const gmxAdapter: IProtocolAdapter = {
                                 if (staked.gt(0)) {
                                     ({ price: stakingRewardsPrice, usdValue: stakingRewardsUsdValue } = fetchUsdValue(
                                         coingeckoResponse,
-                                        contractStaticInfo.tokensDetailRewards[0],
+                                        stakeDeposit.tokenDetailsRewards,
                                         stakingRewards
                                     ));
                                 }
 
-                                const stakeFeesContract = getReadContract(contractStaticInfo.chainId, contractStaticInfo.extraAddresses[0], contractStaticInfo.extraABIs[0]);
+                                const stakeFeesContract = getReadContract(stakeDeposit.chainId, stakeDeposit.feeStakeTokenAddress[0], JSON.stringify(rewardTrackerABI));
                                 const feeStakingRewards = await stakeFeesContract.claimable(address);
-                                const feeStakingRewardsCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokensDetailRewards[1].token, feeStakingRewards);
+                                const feeStakingRewardsCA = CurrencyAmount.fromRawAmount(stakeDeposit.tokenFeeRewards.token, feeStakingRewards);
                                 const feeStakingRewardsExact = feeStakingRewardsCA.toExact();
 
                                 let feeStakingRewardsUsdValue = 0;
@@ -72,7 +75,7 @@ const gmxAdapter: IProtocolAdapter = {
                                 if (staked.gt(0)) {
                                     ({ price: feeStakingRewardsPrice, usdValue: feeStakingRewardsUsdValue } = fetchUsdValue(
                                         coingeckoResponse,
-                                        contractStaticInfo.tokensDetailRewards[1],
+                                        stakeDeposit.tokenFeeRewards,
                                         feeStakingRewards
                                     ));
                                 }
@@ -81,24 +84,24 @@ const gmxAdapter: IProtocolAdapter = {
                                     deposits.items?.push({
                                         balance: [{
                                             amount: stakedExact,
-                                            tokenDetail: contractStaticInfo.tokenDetail,
+                                            tokenDetail: stakeDeposit.tokenDetails,
                                             price: stakedPrice,
                                             usdValue: stakedUsdValue
                                         }],
-                                        pool: [contractStaticInfo.tokenDetail],
+                                        pool: [stakeDeposit.tokenDetails],
                                         rewards: [{
                                             amount: stakingRewardsExact,
-                                            tokenDetail: contractStaticInfo.tokensDetailRewards[0],
+                                            tokenDetail: stakeDeposit.tokenDetailsRewards,
                                             price: stakingRewardsPrice,
                                             usdValue: stakingRewardsUsdValue
                                         }, {
                                             amount: feeStakingRewardsExact,
-                                            tokenDetail: contractStaticInfo.tokensDetailRewards[1],
+                                            tokenDetail: stakeDeposit.tokenFeeRewards,
                                             price: feeStakingRewardsPrice,
                                             usdValue: feeStakingRewardsUsdValue
                                         }],
                                         usdValue: 0,
-                                        address: contractStaticInfo.address
+                                        address: protocolDeposit.address
                                     });
                                 }
 
@@ -108,15 +111,16 @@ const gmxAdapter: IProtocolAdapter = {
                             break;
                         case ProtocolTypes.Vesting:
                             try {
+                                const vestingDeposit = protocolDeposit as GmxVestDepositInfo;
                                 const coingeckoResponse = await getCoingeckoPricesFromTokenDetails([
-                                    contractStaticInfo.tokenDetail,
-                                    contractStaticInfo.tokensDetailRewards[0]
+                                    vestingDeposit.tokenDetails,
+                                    vestingDeposit.tokenDetailsRewards
                                 ]);
                                 const vestedRewardsBalance = await stakeContract.balanceOf(address);
-                                const vestedRewardsBalanceCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokensDetailRewards[0].token, vestedRewardsBalance);
+                                const vestedRewardsBalanceCA = CurrencyAmount.fromRawAmount(vestingDeposit.tokenDetailsRewards.token, vestedRewardsBalance);
 
                                 const vestedRewards = await stakeContract.claimable(address);
-                                const vestedRewardsCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokensDetailRewards[0].token, vestedRewards);
+                                const vestedRewardsCA = CurrencyAmount.fromRawAmount(vestingDeposit.tokenDetailsRewards.token, vestedRewards);
                                 const vestedRewardsExact = vestedRewardsCA.toExact();
 
                                 let vestedRewardsUsdValue = 0;
@@ -124,21 +128,21 @@ const gmxAdapter: IProtocolAdapter = {
                                 if (vestedRewardsBalance.gt(0)) {
                                     ({ price: vestedRewardsPrice, usdValue: vestedRewardsUsdValue } = fetchUsdValue(
                                         coingeckoResponse,
-                                        contractStaticInfo.tokensDetailRewards[0],
+                                        vestingDeposit.tokenDetailsRewards,
                                         vestedRewards
                                     ));
                                 }
 
                                 const vestedBalanceCA = vestedRewardsBalanceCA.subtract(vestedRewardsCA);
                                 const vestedBalanceExact = vestedBalanceCA.toExact();
-                                const vestedBalance = ethers.utils.parseUnits(vestedBalanceExact, contractStaticInfo.tokensDetailRewards[0].token.decimals);
+                                const vestedBalance = ethers.utils.parseUnits(vestedBalanceExact, vestingDeposit.tokenDetailsRewards.token.decimals);
 
                                 let vestedUsdValue = 0;
                                 let vestedPrice = 0;
                                 if (vestedRewardsBalance.gt(0)) {
                                     ({ price: vestedPrice, usdValue: vestedUsdValue } = fetchUsdValue(
                                         coingeckoResponse,
-                                        contractStaticInfo.tokenDetail,
+                                        vestingDeposit.tokenDetails,
                                         vestedBalance
                                     ));
                                 }
@@ -148,19 +152,19 @@ const gmxAdapter: IProtocolAdapter = {
                                     deposits.items?.push({
                                         balance: [{
                                             amount: vestedBalanceExact,
-                                            tokenDetail: contractStaticInfo.tokenDetail,
+                                            tokenDetail: vestingDeposit.tokenDetails,
                                             price: vestedPrice,
                                             usdValue: vestedUsdValue
                                         }],
-                                        pool: [contractStaticInfo.tokenDetail],
+                                        pool: [vestingDeposit.tokenDetails],
                                         rewards: [{
                                             amount: vestedRewardsExact,
-                                            tokenDetail: contractStaticInfo.tokensDetailRewards[0],
+                                            tokenDetail: vestingDeposit.tokenDetailsRewards,
                                             price: vestedRewardsPrice,
                                             usdValue: vestedRewardsUsdValue
                                         }],
                                         usdValue: 0,
-                                        address: contractStaticInfo.address
+                                        address: protocolDeposit.address
                                     });
                                 }
                             } catch (error) {

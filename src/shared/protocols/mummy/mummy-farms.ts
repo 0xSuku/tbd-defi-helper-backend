@@ -1,8 +1,9 @@
 import { ChainId } from "../../chains";
 import { Tokens } from "../../tokens";
 import { ContractStaticInfo } from "../../types/protocols";
+import { rewardTrackerABI, stakerABI, vesterABI } from "../abi/base/gmx-abis";
 import { Protocols, ProtocolTypes } from "../constants";
-import { fMLPAddress, fMMYAddress, rewardTrackerABI, stakerABI, vesterABI } from "./mummy-abis";
+import { fMLPAddress, fMMYAddress } from "./mummy-addresses";
 
 export const mummyFarms: ContractStaticInfo[] = [
     {

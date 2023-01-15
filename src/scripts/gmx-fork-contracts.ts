@@ -1,5 +1,5 @@
 import { ChainId, getReadContract } from "../shared/chains";
-import { rewardRouterABI } from "../shared/protocols/gmx/gmx-abis";
+import { rewardRouterABI } from "../shared/protocols/abi/base/gmx-abis";
 
 async function getGMXContracts() {
     const baseContractAddress = '0xa906f338cb21815cbc4bc87ace9e68c87ef8d8f1';

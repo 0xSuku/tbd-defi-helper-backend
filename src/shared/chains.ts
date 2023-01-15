@@ -1,16 +1,15 @@
 import { ethers } from "ethers"
 
-export const RPC_ETHEREUM = "https://eth-mainnet.g.alchemy.com/v2/fGd5ch2Rr-xB7UX8JWBmFGqqFpSP3Flk"
-export const RPC_POLYGON = "https://polygon-rpc.com"
-export const RPC_BSC = "https://bsc-dataseed1.binance.org/"
-export const RPC_HECO = "https://http-mainnet.hecochain.com"
-export const RPC_MILKOMEDA = "https://rpc-mainnet-cardano-evm.c1.milkomeda.com"
-export const RPC_FTM = "https://rpc.ftm.tools/"
-export const RPC_GNOSIS = "https://rpc.ankr.com/gnosis"
-export const RPC_AVALANCHE = "https://api.avax.network/ext/bc/C/rpc"
-export const RPC_OPTIMISM = "https://opt-mainnet.g.alchemy.com/v2/7IVenVkZ0s_GxdG5A50n53VQldHtRdQV"
-export const RPC_ARBITRUM = "https://arb1.arbitrum.io/rpc"
-export const RPC_METIS = "https://andromeda.metis.io/?owner=1088"
+export const RPC_ETHEREUM = process.env.RPC_ETHEREUM as string;
+export const RPC_POLYGON = process.env.RPC_POLYGON as string;
+export const RPC_BSC = process.env.RPC_BSC as string;
+export const RPC_GNOSIS = process.env.RPC_GNOSIS as string;
+export const RPC_MILKOMEDA = process.env.RPC_MILK as string;
+export const RPC_FTM = process.env.RPC_FTM as string;
+export const RPC_AVALANCHE = process.env.RPC_AVALANCHE as string;
+export const RPC_OPTIMISM = process.env.RPC_OPTIMISM as string;
+export const RPC_ARBITRUM = process.env.RPC_ARBITRUM as string;
+export const RPC_METIS = process.env.RPC_METIS as string;
 
 export enum ChainId {
     Ethereum = 1,

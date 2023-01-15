@@ -1,10 +1,52 @@
 import { ChainId } from "../../chains";
 import { Tokens } from "../../tokens";
-import { ContractStaticInfo } from "../../types/protocols";
+import { ContractStaticInfo, ProtocolDeposit } from "../../types/protocols";
+import { rewardTrackerABI, stakerABI, vesterABI } from "../abi/base/gmx-abis";
 import { Protocols, ProtocolTypes } from "../constants";
-import { fGlpAddress, fGmxAddress, rewardTrackerABI, stakerABI, vesterABI } from "./gmx-abis";
+import { GmxStakeDepositInfo, GmxVestDepositInfo } from "../entities/deposit";
+import { fGlpAddress, fGmxAddress } from "./gmx-abis";
 
-export const gmxFarms: ContractStaticInfo[] = [
+const stakedGmx = new GmxStakeDepositInfo({
+    name: 'Staked GMX',
+    protocol: Protocols.GMX,
+    chainId: ChainId.Arbitrum,
+    tokenDetailsStake: Tokens.arbitrum.sGMX,
+    tokenDetailsRewards: Tokens.arbitrum.esGMX,
+    tokenDetailsFeeRewards: Tokens.arbitrum.WETH,
+    feeStakeTokenAddress: fGmxAddress
+});
+const stakedGlp = new GmxStakeDepositInfo({
+    name: 'Staked GLP',
+    protocol: Protocols.GMX,
+    chainId: ChainId.Arbitrum,
+    tokenDetailsStake: Tokens.arbitrum.fsGLP,
+    tokenDetailsRewards: Tokens.arbitrum.esGMX,
+    tokenDetailsFeeRewards: Tokens.arbitrum.WETH,
+    feeStakeTokenAddress: fGlpAddress
+});
+const vestedGmx = new GmxVestDepositInfo({
+    name: 'Vesting GMX',
+    protocol: Protocols.GMX,
+    chainId: ChainId.Arbitrum,
+    tokenDetailsVest: Tokens.arbitrum.vGLP,
+    tokenDetailsRewards: Tokens.arbitrum.GMX,
+});
+const vestedGlp = new GmxVestDepositInfo({
+    name: 'Vesting GLP',
+    protocol: Protocols.GMX,
+    chainId: ChainId.Arbitrum,
+    tokenDetailsVest: Tokens.arbitrum.vGMX,
+    tokenDetailsRewards: Tokens.arbitrum.GMX,
+});
+
+export const gmxFarms: ProtocolDeposit[] = [
+    stakedGmx,
+    stakedGlp,
+    vestedGmx,
+    vestedGlp
+];
+
+export const gmxFarms2: ContractStaticInfo[] = [
     {
         abi: stakerABI,
         address: Tokens.arbitrum.sGMX.token.address,

@@ -1,5 +1,7 @@
+import { Token } from '@uniswap/sdk-core';
 import { ChainId } from '../chains';
 import { Protocols, ProtocolTypes } from '../protocols/constants';
+import { GmxStakeDepositInfo, GmxVestDepositInfo } from '../protocols/entities/deposit';
 import { TokenAmount, TokenDetails } from './tokens';
 
 declare type ProtocolItem = {
@@ -36,3 +38,5 @@ declare type ContractStaticInfo = {
     extraAddresses?: string[];
     extraABIs?: string[];
 }
+
+declare type ProtocolDeposit = GmxStakeDepositInfo | GmxVestDepositInfo;
