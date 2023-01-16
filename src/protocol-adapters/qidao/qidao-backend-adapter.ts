@@ -2,12 +2,11 @@ import { CurrencyAmount } from "@uniswap/sdk-core";
 import { BigNumber, ethers } from "ethers";
 import { getCoingeckoPricesFromTokenDetails } from "../../helpers/common";
 import { getReadContract } from "../../shared/chains";
-import { ContractStaticInfo, ProtocolInfo } from "../../shared/types/protocols";
+import { ProtocolInfo } from "../../shared/types/protocols";
 import { ProtocolTypes } from "../../shared/protocols/constants";
-import { tokenTypesData } from "../../shared/constants/token";
-import { fetchUsdValue, multiplyBN, toFixedTrunc6Digits } from "../../helpers/math";
+import { fetchUsdValue } from "../../helpers/math";
+import { QiDaoFarmVaultDepositInfo } from "../../shared/protocols/entities/qidao";
 import qiFarms from "../../shared/protocols/qidao/qidao-farms";
-import { CoingeckoResponse, TokenDetails } from "../../shared/types/tokens";
 
 export interface IProtocolAdapter {
     getFarmInfo: (address: string) => Promise<ProtocolInfo>;
@@ -21,20 +20,22 @@ const qiAdapter: IProtocolAdapter = {
         };
 
         await Promise.all(
-            qiFarms.map(async (contractStaticInfo: ContractStaticInfo) => {
+            qiFarms.map(async (farmVaultDepositInfo: QiDaoFarmVaultDepositInfo) => {
 
-                const contract = getReadContract(contractStaticInfo.chainId, contractStaticInfo.address, JSON.stringify(contractStaticInfo.abi));
-                if (contract && contractStaticInfo.params) {
+                const contract = getReadContract(farmVaultDepositInfo.chainId, farmVaultDepositInfo.address, JSON.stringify(farmVaultDepositInfo.abi));
+                if (contract) {
+                    if (!farmVaultDepositInfo.vaultId) throw new Error('Should have the fees address');
+                    
                     const coingeckoResponse = await getCoingeckoPricesFromTokenDetails([
-                        contractStaticInfo.tokensDetailRewards[0]
+                        farmVaultDepositInfo.tokenDetailsRewards
                     ]);
 
-                    const farmingDeposit: BigNumber = await contract.deposited(contractStaticInfo.params[0], address);
-                    const farmingDepositCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokenDetail.token, farmingDeposit.toString());
+                    const farmingDeposit: BigNumber = await contract.deposited(farmVaultDepositInfo.vaultId, address);
+                    const farmingDepositCA = CurrencyAmount.fromRawAmount(farmVaultDepositInfo.tokenDetails.token, farmingDeposit.toString());
                     const farmingDepositExact = farmingDepositCA.toExact();
 
-                    const farmingRewards = await contract.pending(contractStaticInfo.params[0], address);
-                    const farmingRewardsCA = CurrencyAmount.fromRawAmount(contractStaticInfo.tokensDetailRewards[0].token, farmingRewards);
+                    const farmingRewards = await contract.pending(farmVaultDepositInfo.vaultId, address);
+                    const farmingRewardsCA = CurrencyAmount.fromRawAmount(farmVaultDepositInfo.tokenDetailsRewards.token, farmingRewards);
                     const farmingRewardsExact = farmingRewardsCA.toExact();
 
                     let farmingRewardsUsdValue = 0;
@@ -42,7 +43,7 @@ const qiAdapter: IProtocolAdapter = {
                     if (farmingDeposit.gt(0)) {
                         ({ price: farmingRewardsPrice, usdValue: farmingRewardsUsdValue } = fetchUsdValue(
                             coingeckoResponse,
-                            contractStaticInfo.tokensDetailRewards[0],
+                            farmVaultDepositInfo.tokenDetailsRewards,
                             farmingRewards
                         ));
                     }
@@ -51,19 +52,19 @@ const qiAdapter: IProtocolAdapter = {
                         farms.items?.push({
                             balance: [{
                                 amount: farmingDepositExact,
-                                tokenDetail: contractStaticInfo.tokenDetail,
+                                tokenDetail: farmVaultDepositInfo.tokenDetails,
                                 price: 0,
                                 usdValue: 0
                             }],
-                            pool: [contractStaticInfo.tokenDetail],
+                            pool: [farmVaultDepositInfo.tokenDetails],
                             rewards: [{
                                 amount: farmingRewardsExact,
-                                tokenDetail: contractStaticInfo.tokensDetailRewards[0],
+                                tokenDetail: farmVaultDepositInfo.tokenDetailsRewards,
                                 price: farmingRewardsPrice,
                                 usdValue: farmingRewardsUsdValue,
                             }],
                             usdValue: 0,
-                            address: contractStaticInfo.address
+                            address: farmVaultDepositInfo.address
                         });
                     }
                 }

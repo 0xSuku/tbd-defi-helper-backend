@@ -1,6 +1,7 @@
 import { ChainId } from '../chains';
 import { Protocols, ProtocolTypes } from '../protocols/constants';
 import { GmxStakeDepositInfo, GmxVestDepositInfo } from '../protocols/entities/gmx';
+import { QiDaoFarmVaultDepositInfo } from '../protocols/entities/qidao';
 import { TokenAmount, TokenDetails } from './tokens';
 
 declare type ProtocolItem = {
@@ -39,3 +40,4 @@ declare type ContractStaticInfo = {
 }
 
 declare type GmxProtocolDeposit = GmxStakeDepositInfo | GmxVestDepositInfo;
+declare type QiDaoProtocolDeposit = QiDaoFarmVaultDepositInfo;
