@@ -1,10 +1,11 @@
-import { ethers } from "ethers"
+import { ethers } from "ethers";
+import 'dotenv/config'
 
 export const RPC_ETHEREUM = process.env.RPC_ETHEREUM as string;
 export const RPC_POLYGON = process.env.RPC_POLYGON as string;
 export const RPC_BSC = process.env.RPC_BSC as string;
 export const RPC_GNOSIS = process.env.RPC_GNOSIS as string;
-export const RPC_MILKOMEDA = process.env.RPC_MILK as string;
+export const RPC_MILKOMEDA = process.env.RPC_MILKOMEDA as string;
 export const RPC_FTM = process.env.RPC_FTM as string;
 export const RPC_AVALANCHE = process.env.RPC_AVALANCHE as string;
 export const RPC_OPTIMISM = process.env.RPC_OPTIMISM as string;

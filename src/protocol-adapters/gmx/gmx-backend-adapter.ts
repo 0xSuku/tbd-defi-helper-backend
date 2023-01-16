@@ -1,33 +1,30 @@
-import { CurrencyAmount, Token } from "@uniswap/sdk-core";
+import { CurrencyAmount } from "@uniswap/sdk-core";
 import { getReadContract } from "../../shared/chains";
-import { ContractStaticInfo, ProtocolDeposit, ProtocolInfo } from "../../shared/types/protocols";
+import { GmxProtocolDeposit, ProtocolInfo, ProtocolItem } from "../../shared/types/protocols";
 import { ProtocolTypes } from "../../shared/protocols/constants";
 import { getCoingeckoPricesFromTokenDetails } from "../../helpers/common";
 import { fetchUsdValue } from "../../helpers/math";
-import { BigNumber, ethers } from "ethers";
-import { GmxStakeDepositInfo, GmxVestDepositInfo } from "../../shared/protocols/entities/deposit";
-import { rewardTrackerABI } from "../../shared/protocols/abi/base/gmx-abis";
+import { ethers } from "ethers";
+import { rewardTrackerABI } from "../../shared/protocols/entities/gmx-abis";
+import { GmxStakeDepositInfo, GmxVestDepositInfo } from "../../shared/protocols/entities/gmx";
 
 export interface IProtocolAdapter {
-    getStakingInfo: (address: string, gmxFarms: ProtocolDeposit[], glpDepositContract: string) => Promise<ProtocolInfo>;
+    fetchDepositInfo: (address: string, gmxDeposit: GmxProtocolDeposit[]) => Promise<ProtocolInfo[]>;
 }
 
 const gmxAdapter: IProtocolAdapter = {
-    getStakingInfo: async (address: string, gmxFarms: ProtocolDeposit[], glpDepositContract: string) => {
+    fetchDepositInfo: async (address: string, gmxFarms: GmxProtocolDeposit[]) => {
         
-        let deposits: ProtocolInfo = {
-            type: ProtocolTypes.Farms,
-            items: []
-        };
+        let deposits: ProtocolInfo[] = [];
 
         await Promise.all(
-            gmxFarms.map(async (protocolDeposit: ProtocolDeposit) => {
-                const stakeContract = getReadContract(protocolDeposit.chainId, protocolDeposit.address, JSON.stringify(protocolDeposit.abi));
+            gmxFarms.map(async (GmxProtocolDeposit: GmxProtocolDeposit) => {
+                const stakeContract = getReadContract(GmxProtocolDeposit.chainId, GmxProtocolDeposit.address, JSON.stringify(GmxProtocolDeposit.abi));
                 if (stakeContract) {
-                    switch (protocolDeposit.type) {
+                    switch (GmxProtocolDeposit.type) {
                         case ProtocolTypes.Staking:
                             try {
-                                const stakeDeposit = protocolDeposit as GmxStakeDepositInfo;
+                                const stakeDeposit = GmxProtocolDeposit as GmxStakeDepositInfo;
                                 if (!stakeDeposit.feeStakeTokenAddress) throw new Error('Should have the fees address');
                                 if (!stakeDeposit.tokenFeeRewards) throw new Error('Should have the fees rewards token');
 
@@ -65,7 +62,7 @@ const gmxAdapter: IProtocolAdapter = {
                                     ));
                                 }
 
-                                const stakeFeesContract = getReadContract(stakeDeposit.chainId, stakeDeposit.feeStakeTokenAddress[0], JSON.stringify(rewardTrackerABI));
+                                const stakeFeesContract = getReadContract(stakeDeposit.chainId, stakeDeposit.feeStakeTokenAddress, JSON.stringify(rewardTrackerABI));
                                 const feeStakingRewards = await stakeFeesContract.claimable(address);
                                 const feeStakingRewardsCA = CurrencyAmount.fromRawAmount(stakeDeposit.tokenFeeRewards.token, feeStakingRewards);
                                 const feeStakingRewardsExact = feeStakingRewardsCA.toExact();
@@ -81,7 +78,7 @@ const gmxAdapter: IProtocolAdapter = {
                                 }
 
                                 if (staked.gt(0)) {
-                                    deposits.items?.push({
+                                    addProtocolItemToCurrentDeposits(deposits, ProtocolTypes.Staking, {
                                         balance: [{
                                             amount: stakedExact,
                                             tokenDetail: stakeDeposit.tokenDetails,
@@ -101,7 +98,7 @@ const gmxAdapter: IProtocolAdapter = {
                                             usdValue: feeStakingRewardsUsdValue
                                         }],
                                         usdValue: 0,
-                                        address: protocolDeposit.address
+                                        address: GmxProtocolDeposit.address
                                     });
                                 }
 
@@ -111,7 +108,7 @@ const gmxAdapter: IProtocolAdapter = {
                             break;
                         case ProtocolTypes.Vesting:
                             try {
-                                const vestingDeposit = protocolDeposit as GmxVestDepositInfo;
+                                const vestingDeposit = GmxProtocolDeposit as GmxVestDepositInfo;
                                 const coingeckoResponse = await getCoingeckoPricesFromTokenDetails([
                                     vestingDeposit.tokenDetails,
                                     vestingDeposit.tokenDetailsRewards
@@ -149,7 +146,7 @@ const gmxAdapter: IProtocolAdapter = {
 
 
                                 if (vestedRewardsBalance.gt(0)) {
-                                    deposits.items?.push({
+                                    addProtocolItemToCurrentDeposits(deposits, ProtocolTypes.Vesting, {
                                         balance: [{
                                             amount: vestedBalanceExact,
                                             tokenDetail: vestingDeposit.tokenDetails,
@@ -164,7 +161,7 @@ const gmxAdapter: IProtocolAdapter = {
                                             usdValue: vestedRewardsUsdValue
                                         }],
                                         usdValue: 0,
-                                        address: protocolDeposit.address
+                                        address: GmxProtocolDeposit.address
                                     });
                                 }
                             } catch (error) {
@@ -179,3 +176,16 @@ const gmxAdapter: IProtocolAdapter = {
     }
 }
 export default gmxAdapter;
+
+function addProtocolItemToCurrentDeposits(currentDeposits: ProtocolInfo[], protocolType: ProtocolTypes, protocolItem: ProtocolItem) {
+    let deposit = currentDeposits.find(currentDeposit => currentDeposit.type === protocolType);
+    if (!deposit) {
+        deposit = {
+            type: protocolType,
+            items: []
+        };
+        currentDeposits.push(deposit);
+    }
+    
+    deposit.items?.push(protocolItem);
+}

@@ -1,8 +1,8 @@
 import express, { Application, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import protocolList from './shared/protocols';
-import qiAdapter from './protocols/qidao/qidao-backend-adapter';
-import gmxAdapter from './protocols/gmx/gmx-backend-adapter';
+import qiAdapter from './protocol-adapters/qidao/qidao-backend-adapter';
+import gmxAdapter from './protocol-adapters/gmx/gmx-backend-adapter';
 import cors from 'cors';
 import { TokenAmount, TokenDetails } from './shared/types/tokens';
 import { Tokens } from './shared/tokens';
@@ -66,43 +66,45 @@ app.get('/fetchWalletNatives', async (req: Request, res: Response) => {
 app.get('/fetchWalletProtocols', async (req: Request, res: Response) => {
     const address = req.query.address;
     if (address && typeof address === 'string') {
-        const prot = await Promise.all(
-            protocolList.map(async (protocol: Protocol) => {
-                protocol.info = [];
-                switch (protocol.symbol) {
-                    case Protocols.Qi_Dao:
-                        const qiDaoInfo = await qiAdapter.getFarmInfo(address);
-                        if (qiDaoInfo.items?.length)
-                            protocol.info.push(qiDaoInfo);
+        try {
+            const prot = await Promise.all(
+                protocolList.map(async (protocol: Protocol) => {
+                    protocol.info = [];
+                    switch (protocol.symbol) {
+                        case Protocols.Qi_Dao:
+                            const qiDaoInfo = await qiAdapter.getFarmInfo(address);
+                            if (qiDaoInfo.items?.length)
+                                protocol.info.push(qiDaoInfo);
 
-                        return protocol;
-                    case Protocols.Mummy:
-                        const mummyInfo = await gmxAdapter.getStakingInfo(
-                            address,
-                            mummyFarms,
-                            '0xA6D7D0e650aa40FFa42d845A354c12c2bc0aB15f'
-                        );
-                        if (mummyInfo.items?.length)
-                            protocol.info.push(mummyInfo);
+                            return protocol;
+                        case Protocols.Mummy:
+                            const mummyInfo = await gmxAdapter.fetchDepositInfo(
+                                address,
+                                mummyFarms,
+                            );
+                            if (mummyInfo.length)
+                                protocol.info.push(...mummyInfo);
 
-                        return protocol;
-                    case Protocols.GMX:
-                        const gmxInfo = await gmxAdapter.getStakingInfo(
-                            address,
-                            gmxFarms,
-                            '0x489ee077994b6658eafa855c308275ead8097c4a'
-                        )
-                        if (gmxInfo.items?.length)
-                            protocol.info.push(gmxInfo);
+                            return protocol;
+                        case Protocols.GMX:
+                            const gmxInfo = await gmxAdapter.fetchDepositInfo(
+                                address,
+                                gmxFarms,
+                            )
+                            if (gmxInfo.length)
+                                protocol.info.push(...gmxInfo);
 
-                        return protocol;
-                    default:
-                        protocol.info.push({ type: ProtocolTypes.Farms, items: [] });
-                        return protocol;
-                }
-            })
-        );
-        res.send(prot);
+                            return protocol;
+                        default:
+                            protocol.info.push({ type: ProtocolTypes.Farms, items: [] });
+                            return protocol;
+                    }
+                })
+            );
+            res.send(prot);
+        } catch (err: any) {
+            debugger;
+        }
     }
 });
 
