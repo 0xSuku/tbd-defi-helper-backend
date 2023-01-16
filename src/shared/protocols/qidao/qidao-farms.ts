@@ -2,11 +2,9 @@ import { Token } from "@uniswap/sdk-core";
 import { ChainId } from "../../chains";
 import { TokenTypes } from "../../constants/token";
 import { Tokens } from "../../tokens";
-import { ContractStaticInfo, QiDaoProtocolDeposit } from "../../types/protocols";
-import { Protocols, ProtocolTypes } from "../constants";
+import { QiDaoProtocolDeposit } from "../../types/protocols";
+import { Protocols } from "../constants";
 import { QiDaoFarmVaultDepositInfo } from "../entities/qidao";
-import { qiFarmABI } from "./qidao-abis";
-
 
 const vaultArrakisMaiUsdc = new QiDaoFarmVaultDepositInfo({
     name: 'USDC-MAI Arrakis Vault',
@@ -47,7 +45,7 @@ const vaultQuickswapQiMatic = new QiDaoFarmVaultDepositInfo({
     tokenDetailsRewards: Tokens.polygon.QI
 });
 
-export const qiFarms: QiDaoProtocolDeposit[] = [
+const qiFarms: QiDaoProtocolDeposit[] = [
     vaultArrakisMaiUsdc,
     vaultQuickswapMaiUsdc,
     vaultQuickswapQiMatic
