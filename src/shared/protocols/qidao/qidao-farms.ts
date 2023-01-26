@@ -1,54 +1,57 @@
-import { Token } from "@uniswap/sdk-core";
 import { ChainId } from "../../chains";
-import { TokenTypes } from "../../constants/token";
 import { Tokens } from "../../tokens";
 import { QiDaoProtocolDeposit } from "../../types/protocols";
-import { Protocols } from "../constants";
+import { arrakisVaultV1 } from "../arrakis/arrakis-abis";
+import { ArrakisPoolInfo, PoolInfo } from "../entities/deposit";
 import { QiDaoFarmVaultDepositInfo } from "../entities/qidao";
+import { QiDaoTokens } from "./qidao-tokens";
 
-const vaultArrakisMaiUsdc = new QiDaoFarmVaultDepositInfo({
-    name: 'USDC-MAI Arrakis Vault',
-    protocol: Protocols.Qi_Dao,
-    chainId: ChainId.Polygon,
-    contractAddress: '0x9f9f0456005ed4e7248199b6260752e95682a883',
-    vaultId: '0',
-    tokenDetailsVault: {
-        token: new Token(ChainId.Polygon, '0xa199569af06cb68960869fe376c9b41f68d8e2d1', 18, 'Arrakis Vault V1 USDC/miMATIC', 'USDC+MAI'),
-        tokenInfo: TokenTypes.UNUSED,
-    },
-    tokenDetailsRewards: Tokens.polygon.QI
-});
+const arrakis_MAI_USDC_PoolInfo: ArrakisPoolInfo = new ArrakisPoolInfo([
+    Tokens.polygon.USDC,
+    Tokens.polygon.MAI,
+], QiDaoTokens.RAKIS_30.token.address, ChainId.Polygon, arrakisVaultV1);
+const arrakis_MAI_USDC = new QiDaoFarmVaultDepositInfo(
+    'USDC-MAI Arrakis Vault',
+    ChainId.Polygon,
+    '0x9f9f0456005ed4e7248199b6260752e95682a883',
+    '0',
+    QiDaoTokens.RAKIS_30,
+    Tokens.polygon.QI,
+    arrakis_MAI_USDC_PoolInfo
+);
 
-const vaultQuickswapMaiUsdc = new QiDaoFarmVaultDepositInfo({
-    name: 'MAI-USDC Quickswap LP',
-    protocol: Protocols.Qi_Dao,
-    chainId: ChainId.Polygon,
-    contractAddress: '0xcc54afcecd0d89e0b2db58f5d9e58468e7ad20dc',
-    vaultId: '0',
-    tokenDetailsVault: {
-        token: new Token(ChainId.Polygon, '0x9a8b2601760814019b7e6ee0052e25f1c623d1e6', 18, 'Uniswap V2 (UNI-V2)', 'MAI+USDC'),
-        tokenInfo: TokenTypes.UNUSED,
-    },
-    tokenDetailsRewards: Tokens.polygon.QI
-});
+const quickswap_MAI_USDC_PoolInfo: PoolInfo = new PoolInfo([
+    Tokens.polygon.MAI,
+    Tokens.polygon.USDC,
+], QiDaoTokens.UNI_V2.token.address, ChainId.Polygon, arrakisVaultV1);
+const quickswap_MAI_USDC = new QiDaoFarmVaultDepositInfo(
+    'MAI-USDC Quickswap LP',
+    ChainId.Polygon,
+    '0xcc54afcecd0d89e0b2db58f5d9e58468e7ad20dc',
+    '0',
+    QiDaoTokens.UNI_V2,
+    Tokens.polygon.QI,
+    quickswap_MAI_USDC_PoolInfo
+);
 
-const vaultQuickswapQiMatic = new QiDaoFarmVaultDepositInfo({
-    name: 'QI-WMATIC Quickswap LP',
-    protocol: Protocols.Qi_Dao,
-    chainId: ChainId.Polygon,
-    contractAddress: '0xcc54afcecd0d89e0b2db58f5d9e58468e7ad20dc',
-    vaultId: '1',
-    tokenDetailsVault: {
-        token: new Token(ChainId.Polygon, '0x9a8b2601760814019b7e6ee0052e25f1c623d1e6', 18, 'Uniswap V2 (UNI-V2)', 'QI+WMATIC'),
-        tokenInfo: TokenTypes.UNUSED,
-    },
-    tokenDetailsRewards: Tokens.polygon.QI
-});
+const quickswap_QI_WMATIC_PoolInfo: PoolInfo = new PoolInfo([
+    Tokens.polygon.QI,
+    Tokens.polygon.WMATIC,
+], QiDaoTokens.UNI_V2.token.address, ChainId.Polygon, arrakisVaultV1);
+const quickswap_QI_WMATIC = new QiDaoFarmVaultDepositInfo(
+    'QI-WMATIC Quickswap LP',
+    ChainId.Polygon,
+    '0xcc54afcecd0d89e0b2db58f5d9e58468e7ad20dc',
+    '1',
+    QiDaoTokens.UNI_V2,
+    Tokens.polygon.QI,
+    quickswap_QI_WMATIC_PoolInfo
+);
 
 const qiFarms: QiDaoProtocolDeposit[] = [
-    vaultArrakisMaiUsdc,
-    vaultQuickswapMaiUsdc,
-    vaultQuickswapQiMatic
+    arrakis_MAI_USDC,
+    quickswap_MAI_USDC,
+    quickswap_QI_WMATIC
 ];
 
 export default qiFarms;

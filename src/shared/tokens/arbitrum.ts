@@ -62,6 +62,35 @@ const arbitrum: TokenInfo = {
         token: new Token(ChainId.Arbitrum, '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', 18, 'WETH', 'WETH'),
         tokenInfo: TokenTypes.ETH,
     },
+    
+    WBTC: {
+        token: new Token(ChainId.Arbitrum, '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f', 8, 'WBTC', 'WBTC'),
+        tokenInfo: TokenTypes.BTC,
+    },
+    DAI: {
+        token: new Token(ChainId.Arbitrum, '0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1', 18, 'DAI', 'DAI'),
+        tokenInfo: TokenTypes.DAI,
+    },
+    FRAX: {
+        token: new Token(ChainId.Arbitrum, '0x17FC002b466eEc40DaE837Fc4bE5c67993ddBd6F', 18, 'FRAX', 'FRAX'),
+        tokenInfo: TokenTypes.FRAX,
+    },
+    LINK: {
+        token: new Token(ChainId.Arbitrum, '0xf97f4df75117a78c1A5a0DBb814Af92458539FB4', 18, 'LINK', 'LINK'),
+        tokenInfo: TokenTypes.LINK,
+    },
+    UNI: {
+        token: new Token(ChainId.Arbitrum, '0xFa7F8980b0f1E64A2062791cc3b0871572f1F7f0', 18, 'UNI', 'UNI'),
+        tokenInfo: TokenTypes.UNI,
+    },
+    USDT: {
+        token: new Token(ChainId.Arbitrum, '0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9', 6, 'USDT', 'USDT'),
+        tokenInfo: TokenTypes.USDT,
+    },
+    MIM: {
+        token: new Token(ChainId.Arbitrum, '0xFEa7a6a0B346362BF88A9e4A88416B77a57D6c2A', 18, 'MIM', 'MIM'),
+        tokenInfo: TokenTypes.MIM,
+    },
 };
 
 export default arbitrum;

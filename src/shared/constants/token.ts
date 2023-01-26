@@ -29,6 +29,14 @@ export enum TokenTypes {
 	USDPLUS = 'USD+',
 	HUM = 'HUM',
 	OP = 'OP',
+	THE = 'THE',
+	FRAX = 'FRAX',
+	LINK = 'LINK',
+	UNI = 'UNI',
+	MIM = 'MIM',
+	HAY = 'HAY',
+	IDIA = 'IDIA',
+	DEI = 'DEI',
 }
 
 export interface TokenTypesData {
@@ -156,5 +164,37 @@ export const tokenTypesData: Record<TokenTypes, TokenTypesData> = {
 	'OP': {
 		isStable: false,
 		coingeckoName: 'optimism'
+	},
+	'THE': {
+		isStable: false,
+		coingeckoName: ''
+	},
+	'FRAX': {
+		isStable: true,
+		coingeckoName: 'frax'
+	},
+	'LINK': {
+		isStable: false,
+		coingeckoName: 'chainlink'
+	},
+	'UNI': {
+		isStable: false,
+		coingeckoName: 'uniswap'
+	},
+	'MIM': {
+		isStable: true,
+		coingeckoName: 'magic-internet-money'
+	},
+	'HAY': {
+		isStable: false,
+		coingeckoName: 'helio-protocol-hay'
+	},
+	'IDIA': {
+		isStable: false,
+		coingeckoName: 'idia'
+	},
+	'DEI': {
+		isStable: true,
+		coingeckoName: 'dei-token'
 	}
 }

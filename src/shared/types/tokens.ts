@@ -1,24 +1,24 @@
 import { Token } from "@uniswap/sdk-core"
 import { TokenTypes } from "../constants/token";
 
-type TokenInfo = {
+export interface TokenInfo {
     [key: string]: TokenDetails;
 }
 
-type TokenDetails = {
+export interface TokenDetails {
     token: Token;
     tokenInfo: TokenTypes;
     disabled?: boolean;
 }
 
-type TokenAmount = { 
+export interface TokenAmount { 
     tokenDetail: TokenDetails;
     price: number;
     usdValue: number;
     amount: string;
 }
 
-type CoingeckoResponse = {
+export interface CoingeckoResponse {
 	[key: string]: {
 		usd: number;
 	};

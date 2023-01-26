@@ -62,8 +62,8 @@ const fantom: TokenInfo = {
         token: new Token(ChainId.Fantom, '0x1E4F97b9f9F913c46F1632781732927B9019C68b', 18, 'CRV', 'Curve'),
         tokenInfo: TokenTypes.CRV,
     },
-    WETH: {
-        token: new Token(ChainId.Fantom, '0x74b23882a30290451A17c44f4F05243b6b58C76d', 18, 'WETH', 'WETH'),
+    ETH: {
+        token: new Token(ChainId.Fantom, '0x74b23882a30290451A17c44f4F05243b6b58C76d', 18, 'ETH', 'ETH'),
         tokenInfo: TokenTypes.ETH,
     },    
     QI: {
@@ -90,6 +90,18 @@ const fantom: TokenInfo = {
         token: new Token(ChainId.Fantom, '0x1e1085efaa63edfe74aad7c05a28eae4ef917c3f', 18, 'KNC', 'KNC'),
         tokenInfo: TokenTypes.KNC,
     },
+    BTC: {
+        token: new Token(ChainId.Fantom, '0x321162Cd933E2Be498Cd2267a90534A804051b11', 8, 'BTC', 'BTC'),
+        tokenInfo: TokenTypes.BTC,
+    },   
+    DAI: {
+        token: new Token(ChainId.Fantom, '0x8D11eC38a3EB5E956B052f67Da8Bdc9bef8Abf3E', 18, 'DAI', 'DAI'),
+        tokenInfo: TokenTypes.DAI,
+    },    
+    fUSDT: {
+        token: new Token(ChainId.Fantom, '0x049d68029688eAbF473097a2fC38ef61633A3C7A', 6, 'fUSDT', 'Frapped USDT'),
+        tokenInfo: TokenTypes.USDT,
+    },  
 };
 
 export default fantom;

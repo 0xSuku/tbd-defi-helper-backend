@@ -8,9 +8,8 @@ import bnb from './bnb';
 import gnosis from './gnosis';
 import optimism from './optimism';
 import metis from './metis';
-import { TokenInfo } from '../types/tokens';
 
-export const Tokens: { [key: string]: TokenInfo } = {
+export const Tokens = {
     ethereum,
     optimism,
     bnb,

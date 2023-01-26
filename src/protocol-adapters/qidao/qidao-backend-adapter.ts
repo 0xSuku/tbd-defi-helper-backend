@@ -1,76 +1,90 @@
 import { CurrencyAmount } from "@uniswap/sdk-core";
-import { BigNumber, ethers } from "ethers";
 import { getCoingeckoPricesFromTokenDetails } from "../../helpers/common";
-import { getReadContract } from "../../shared/chains";
 import { ProtocolInfo } from "../../shared/types/protocols";
 import { ProtocolTypes } from "../../shared/protocols/constants";
 import { fetchUsdValue } from "../../helpers/math";
 import { QiDaoFarmVaultDepositInfo } from "../../shared/protocols/entities/qidao";
+import { addProtocolItemToCurrentDeposits, getBalanceFromLP } from "../helpers";
 import qiFarms from "../../shared/protocols/qidao/qidao-farms";
+import { TokenAmount } from "../../shared/types/tokens";
 
 export interface IProtocolAdapter {
-    getFarmInfo: (address: string) => Promise<ProtocolInfo>;
+    fetchDepositInfo: (address: string) => Promise<ProtocolInfo[]>;
 }
 
 const qiAdapter: IProtocolAdapter = {
-    getFarmInfo: async (address: string) => {
-        let farms: ProtocolInfo = {
-            type: ProtocolTypes.Farms,
-            items: []
-        };
+    fetchDepositInfo: async (address: string) => {
+        let deposits: ProtocolInfo[] = [];
 
         await Promise.all(
-            qiFarms.map(async (farmVaultDepositInfo: QiDaoFarmVaultDepositInfo) => {
+            qiFarms.map(async (depositInfo: QiDaoFarmVaultDepositInfo) => {
 
-                const contract = getReadContract(farmVaultDepositInfo.chainId, farmVaultDepositInfo.address, JSON.stringify(farmVaultDepositInfo.abi));
-                if (contract) {
-                    if (!farmVaultDepositInfo.vaultId) throw new Error('Should have the fees address');
-                    
-                    const coingeckoResponse = await getCoingeckoPricesFromTokenDetails([
-                        farmVaultDepositInfo.tokenDetailsRewards
-                    ]);
+                if (!depositInfo.vaultId) throw new Error('Should have the fees address');
 
-                    const farmingDeposit: BigNumber = await contract.deposited(farmVaultDepositInfo.vaultId, address);
-                    const farmingDepositCA = CurrencyAmount.fromRawAmount(farmVaultDepositInfo.tokenDetails.token, farmingDeposit.toString());
-                    const farmingDepositExact = farmingDepositCA.toExact();
+                const coingeckoResponse = await getCoingeckoPricesFromTokenDetails([
+                    depositInfo.tokenDetailsRewards
+                ]);
 
-                    const farmingRewards = await contract.pending(farmVaultDepositInfo.vaultId, address);
-                    const farmingRewardsCA = CurrencyAmount.fromRawAmount(farmVaultDepositInfo.tokenDetailsRewards.token, farmingRewards);
-                    const farmingRewardsExact = farmingRewardsCA.toExact();
+                const farmingDeposit = await depositInfo.getDepositAmount(address);
+                const farmingDepositCA = CurrencyAmount.fromRawAmount(depositInfo.tokenDetails.token, farmingDeposit.toString());
+                const farmingDepositExact = farmingDepositCA.toExact();
 
+                let balanceTokens: TokenAmount[] = [];
+                if (depositInfo.poolInfo) {
+                    balanceTokens = await getBalanceFromLP(depositInfo, farmingDepositCA, coingeckoResponse);
+                } else {
+                    let stakedUsdValue = 0;
+                    let stakedPrice = 0;
+
+                    ({ price: stakedPrice, usdValue: stakedUsdValue } = fetchUsdValue(
+                        coingeckoResponse,
+                        depositInfo.tokenDetails,
+                        farmingDeposit
+                    ));
+
+                    balanceTokens = [{
+                        amount: farmingDepositExact,
+                        tokenDetail: depositInfo.tokenDetails,
+                        price: stakedPrice,
+                        usdValue: stakedUsdValue
+                    }];
+                }
+
+                const farmingRewards = await depositInfo.getRewardAmount(address);
+                const farmingRewardsCA = CurrencyAmount.fromRawAmount(depositInfo.tokenDetailsRewards.token, farmingRewards.toString());
+                const farmingRewardsExact = farmingRewardsCA.toExact();
+
+                if (farmingDeposit.gt(0)) {
                     let farmingRewardsUsdValue = 0;
                     let farmingRewardsPrice = 0;
-                    if (farmingDeposit.gt(0)) {
-                        ({ price: farmingRewardsPrice, usdValue: farmingRewardsUsdValue } = fetchUsdValue(
-                            coingeckoResponse,
-                            farmVaultDepositInfo.tokenDetailsRewards,
-                            farmingRewards
-                        ));
-                    }
+                    ({ price: farmingRewardsPrice, usdValue: farmingRewardsUsdValue } = fetchUsdValue(
+                        coingeckoResponse,
+                        depositInfo.tokenDetailsRewards,
+                        farmingRewards
+                    ));
 
-                    if (farmingDeposit.gt(0)) {
-                        farms.items?.push({
-                            balance: [{
-                                amount: farmingDepositExact,
-                                tokenDetail: farmVaultDepositInfo.tokenDetails,
-                                price: 0,
-                                usdValue: 0
-                            }],
-                            pool: [farmVaultDepositInfo.tokenDetails],
-                            rewards: [{
-                                amount: farmingRewardsExact,
-                                tokenDetail: farmVaultDepositInfo.tokenDetailsRewards,
-                                price: farmingRewardsPrice,
-                                usdValue: farmingRewardsUsdValue,
-                            }],
-                            usdValue: 0,
-                            address: farmVaultDepositInfo.address
-                        });
-                    }
+                    const balanceTokensUsdValue = balanceTokens.reduce((accum, bt) => accum + bt.usdValue, 0);
+                    const totalUsdValue = balanceTokensUsdValue + farmingRewardsUsdValue;
+                    addProtocolItemToCurrentDeposits(deposits, ProtocolTypes.Farms, {
+                        balance: balanceTokens,
+                        pool: [depositInfo.tokenDetails],
+                        rewards: [{
+                            amount: farmingRewardsExact,
+                            tokenDetail: depositInfo.tokenDetailsRewards,
+                            price: farmingRewardsPrice,
+                            usdValue: farmingRewardsUsdValue,
+                        }],
+                        usdValue: totalUsdValue,
+                        address: depositInfo.address,
+                        name: depositInfo.name
+                    });
                 }
             })
         );
-        return farms;
+        return deposits.map(depositInfo => {
+            depositInfo.items = depositInfo.items?.sort((a, b) => b.usdValue - a.usdValue);
+            return depositInfo;
+        });
     }
 }
 export default qiAdapter;

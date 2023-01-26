@@ -1,11 +1,19 @@
-import { ChainId } from "../../chains";
+import { BigNumber, ethers } from "ethers";
+import { ChainId, getReadContract } from "../../chains";
+import { Tokens } from "../../tokens";
 import { TokenDetails } from "../../types/tokens";
-import { stakerABI, vesterABI } from "./gmx-abis";
 import { Protocols, ProtocolTypes } from "../constants";
-import { DepositInfo } from "./deposit";
+import { rewardTrackerABI, stakerABI, vesterABI } from "../gmx-forks/gmx-abis";
+import { DepositInfo, PoolInfo } from "./deposit";
 
-export class GmxStakeDepositInfo extends DepositInfo {
-    constructor(p: {
+export class GmxStakeDepositInfoBase extends DepositInfo {
+    contract: ethers.Contract;
+    stakeFeesContract: ethers.Contract;
+    tokenFeeRewards: TokenDetails;
+    feeStakeTokenAddress: string;
+    poolInfo?: PoolInfo;
+
+    constructor(
         name: string,
         protocol: Protocols,
         chainId: ChainId,
@@ -13,25 +21,89 @@ export class GmxStakeDepositInfo extends DepositInfo {
         tokenDetailsRewards: TokenDetails,
         tokenDetailsFeeRewards: TokenDetails,
         feeStakeTokenAddress: string,
-    }) {
-        super(stakerABI, p.tokenDetailsStake.token.address, p.tokenDetailsStake, p.tokenDetailsRewards, p.name, p.protocol, ProtocolTypes.Staking, p.chainId);
+        poolInfo?: PoolInfo,
+    ) {
+        super(stakerABI, tokenDetailsStake.token.address, tokenDetailsStake, tokenDetailsRewards, name, protocol, ProtocolTypes.Staking, chainId);
 
-        this.tokenFeeRewards = p.tokenDetailsFeeRewards;
-        this.feeStakeTokenAddress = p.feeStakeTokenAddress;
+        this.tokenFeeRewards = tokenDetailsFeeRewards;
+        this.feeStakeTokenAddress = feeStakeTokenAddress;
+        this.contract = getReadContract(this.chainId, this.address, JSON.stringify(this.abi));
+        this.stakeFeesContract = getReadContract(this.chainId, this.feeStakeTokenAddress, JSON.stringify(rewardTrackerABI));
+        this.poolInfo = poolInfo;
     }
 
-    tokenFeeRewards: TokenDetails;
-    feeStakeTokenAddress: string;
+    async getDepositAmount(address: string): Promise<BigNumber> {
+        return await this.contract.stakedAmounts(address);
+    }
+
+    async getRewardAmount(address: string): Promise<BigNumber> {
+        return await this.contract.claimable(address);
+    }
+
+    async getRewardFeesAmount(address: string): Promise<BigNumber> {
+        return await this.stakeFeesContract.claimable(address);
+    }
 }
 
-export class GmxVestDepositInfo extends DepositInfo {
-    constructor(p: {
+export class GmxStakeDepositInfo extends GmxStakeDepositInfoBase {
+    constructor(
+        name: string,
+        tokenDetailsStake: TokenDetails,
+        feeStakeTokenAddress: string,
+        poolInfo?: PoolInfo,
+    ) {
+        super(name, Protocols.GMX, ChainId.Arbitrum, tokenDetailsStake, Tokens.arbitrum.GMX, Tokens.arbitrum.WETH, feeStakeTokenAddress, poolInfo);
+    }
+}
+
+export class MummyStakeDepositInfo extends GmxStakeDepositInfoBase {
+    constructor(
+        name: string,
+        tokenDetailsStake: TokenDetails,
+        feeStakeTokenAddress: string,
+        poolInfo?: PoolInfo,
+    ) {
+        super(name, Protocols.Mummy, ChainId.Fantom, tokenDetailsStake, Tokens.fantom.MMY, Tokens.fantom.WFTM, feeStakeTokenAddress, poolInfo);
+    }
+}
+
+export class GmxVestDepositInfoBase extends DepositInfo {
+    contract: ethers.Contract;
+
+    constructor(
         name: string,
         protocol: Protocols,
         chainId: ChainId,
         tokenDetailsVest: TokenDetails,
         tokenDetailsRewards: TokenDetails
-    }) {
-        super(vesterABI, p.tokenDetailsVest.token.address, p.tokenDetailsVest, p.tokenDetailsRewards, p.name, p.protocol, ProtocolTypes.Vesting, p.chainId);
+    ) {
+        super(vesterABI, tokenDetailsVest.token.address, tokenDetailsVest, tokenDetailsRewards, name, protocol, ProtocolTypes.Vesting, chainId);
+        this.contract = getReadContract(this.chainId, this.address, JSON.stringify(vesterABI));
+    }
+
+    async getDepositAmount(address: string): Promise<BigNumber> {
+        return await this.contract.balanceOf(address);
+    }
+
+    async getRewardAmount(address: string): Promise<BigNumber> {
+        return await this.contract.claimable(address);
+    }
+}
+
+export class GmxVestDepositInfo extends GmxVestDepositInfoBase {
+    constructor(
+        name: string,
+        tokenDetailsVest: TokenDetails,
+    ) {
+        super(name, Protocols.GMX, ChainId.Arbitrum, tokenDetailsVest, Tokens.arbitrum.GMX);
+    }
+}
+
+export class MummyVestDepositInfo extends GmxVestDepositInfoBase {
+    constructor(
+        name: string,
+        tokenDetailsVest: TokenDetails,
+    ) {
+        super(name, Protocols.Mummy, ChainId.Fantom, tokenDetailsVest, Tokens.fantom.MMY);
     }
 }
