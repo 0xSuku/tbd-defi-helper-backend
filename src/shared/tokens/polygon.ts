@@ -1,7 +1,7 @@
 import { Token } from "@uniswap/sdk-core";
-import { TokenInfo } from "../../shared/types/tokens";
 import { ChainId } from "../chains";
 import { TokenTypes } from "../constants/token";
+import { TokenInfo } from "../types/tokens";
 
 const polygon: TokenInfo = {
     QI: {

@@ -1,16 +1,19 @@
 import express, { Application, Request, Response } from 'express';
 import bodyParser from 'body-parser';
-import protocolList from './shared/protocols';
 import qiAdapter from './protocol-adapters/qidao/qidao-backend-adapter';
 import gmxAdapter from './protocol-adapters/gmx/gmx-backend-adapter';
 import cors from 'cors';
 import { TokenAmount, TokenDetails } from './shared/types/tokens';
 import { Tokens } from './shared/tokens';
-import { Protocol } from './shared/types/protocols';
+import { Protocol, ProtocolInfo } from './shared/types/protocols';
 import { Protocols, ProtocolTypes } from './shared/protocols/constants';
-import { mummyFarms } from './shared/protocols/mummy/mummy-farms';
 import { getTokenBalances, getNativeBalances, fetchCoingeckoPrices } from './helpers/common';
-import { gmxFarms } from './shared/protocols/gmx/gmx-farms';
+import solidlyAdapter from './protocol-adapters/solidly/solidly-backend-adapter';
+import { mummyFarms } from './shared/protocols/gmx-forks/mummy/mummy-farms';
+import { gmxFarms } from './shared/protocols/gmx-forks/gmx/gmx-farms';
+import { protocolList } from './shared/protocols/protocol-list';
+import { getUniswapV3Amounts, getUniswapV3TokenAmounts } from './shared/protocols/uniswapv3/uniswapv3';
+import uniswapV3Adapter from './protocol-adapters/uniswapV3/uniswapV3-backend-adapter';
 
 const app: Application = express();
 
@@ -32,7 +35,7 @@ app.get('/fetchWalletTokens', async (req: Request, res: Response) => {
         for (const keysChain of keysChains) {
             if (keysChain === 'nativeTokens') continue;
 
-            const currentTokensChain = Tokens[keysChain];
+            const currentTokensChain = Tokens[keysChain as keyof typeof Tokens];
             const keys = Object.keys(currentTokensChain);
             for (const key of keys) {
                 const currentTokenDetails = currentTokensChain[key];
@@ -66,45 +69,59 @@ app.get('/fetchWalletNatives', async (req: Request, res: Response) => {
 app.get('/fetchWalletProtocols', async (req: Request, res: Response) => {
     const address = req.query.address;
     if (address && typeof address === 'string') {
-        try {
-            const prot = await Promise.all(
-                protocolList.map(async (protocol: Protocol) => {
-                    protocol.info = [];
-                    switch (protocol.symbol) {
-                        case Protocols.Qi_Dao:
-                            const qiDaoInfo = await qiAdapter.getFarmInfo(address);
-                            if (qiDaoInfo.items?.length)
-                                protocol.info.push(qiDaoInfo);
+        const protocols = await Promise.all(
+            protocolList.map(async (protocol: Protocol) => {
+                let depositInfo: ProtocolInfo[] = [];
+                protocol.info = [];
+                switch (protocol.symbol) {
+                    case Protocols.Qi_Dao:
+                        try {
+                            depositInfo = await qiAdapter.fetchDepositInfo(address);
+                        } catch (err: any) {
+                            debugger;
+                        }
+                        break;
+                    case Protocols.Mummy:
+                        try {
+                            depositInfo = await gmxAdapter.fetchDepositInfo(address, mummyFarms);
+                        } catch (err: any) {
+                            debugger;
+                        }
+                        break;
+                    case Protocols.GMX:
+                        try {
+                            depositInfo = await gmxAdapter.fetchDepositInfo(address, gmxFarms);
+                        } catch (err: any) {
+                            debugger;
+                        }
+                        break;
+                    case Protocols.Thena:
+                        try {
+                            depositInfo = await solidlyAdapter.fetchDepositInfo(address);
+                        } catch (err: any) {
+                            debugger;
+                        }
+                        break;
+                    case Protocols.UniswapV3:
+                        try {
+                            depositInfo = await uniswapV3Adapter.fetchDepositInfo(address);
+                        } catch (err: any) {
+                            debugger;
+                        }
+                        break;
+                    default:
+                        protocol.info.push({ type: ProtocolTypes.Farms, items: [], usdValue: 0 });
+                        break;
+                }
+                if (depositInfo.length) {
+                    protocol.info = depositInfo.sort((a, b) => b.usdValue - a.usdValue);
+                    protocol.usdValue = protocol.info.reduce((accum, protocolInfo) => accum + protocolInfo.usdValue, 0);
+                }
 
-                            return protocol;
-                        case Protocols.Mummy:
-                            const mummyInfo = await gmxAdapter.fetchDepositInfo(
-                                address,
-                                mummyFarms,
-                            );
-                            if (mummyInfo.length)
-                                protocol.info.push(...mummyInfo);
-
-                            return protocol;
-                        case Protocols.GMX:
-                            const gmxInfo = await gmxAdapter.fetchDepositInfo(
-                                address,
-                                gmxFarms,
-                            )
-                            if (gmxInfo.length)
-                                protocol.info.push(...gmxInfo);
-
-                            return protocol;
-                        default:
-                            protocol.info.push({ type: ProtocolTypes.Farms, items: [] });
-                            return protocol;
-                    }
-                })
-            );
-            res.send(prot);
-        } catch (err: any) {
-            debugger;
-        }
+                return protocol;
+            })
+        );
+        res.send(protocols.sort((a, b) => b.usdValue - a.usdValue));
     }
 });
 

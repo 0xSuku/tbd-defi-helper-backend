@@ -1,23 +1,36 @@
-import { ChainId } from "../../chains";
+import { ChainId, getReadContract } from "../../chains";
 import { TokenDetails } from "../../types/tokens";
 import { Protocols, ProtocolTypes } from "../constants";
-import { DepositInfo } from "./deposit";
+import { DepositInfo, PoolInfoBase } from "./deposit";
 import { qiFarmABI } from "../qidao/qidao-abis";
+import { BigNumber, ethers } from "ethers";
 
 export class QiDaoFarmVaultDepositInfo extends DepositInfo {
-    constructor(p: {
+    contract: ethers.Contract;
+    vaultId: string;
+    poolInfo?: PoolInfoBase;
+    
+    constructor(
         name: string,
-        protocol: Protocols,
         chainId: ChainId,
         contractAddress: string,
         vaultId: string,
         tokenDetailsVault: TokenDetails,
-        tokenDetailsRewards: TokenDetails
-    }) {
-        super(qiFarmABI, p.contractAddress, p.tokenDetailsVault, p.tokenDetailsRewards, p.name, p.protocol, ProtocolTypes.Farms, p.chainId);
+        tokenDetailsRewards: TokenDetails,
+        poolInfo?: PoolInfoBase,
+    ) {
+        super(qiFarmABI, contractAddress, tokenDetailsVault, tokenDetailsRewards, name, Protocols.Qi_Dao, ProtocolTypes.Farms, chainId);
         
-        this.vaultId = p.vaultId;
+        this.vaultId = vaultId;
+        this.contract = getReadContract(this.chainId, this.address, JSON.stringify(qiFarmABI));
+        this.poolInfo = poolInfo;
     }
 
-    vaultId: string;
+    async getDepositAmount(address: string): Promise<BigNumber> {
+        return await this.contract.deposited(this.vaultId, address);
+    }
+
+    async getRewardAmount(address: string): Promise<BigNumber> {
+        return await this.contract.pending(this.vaultId, address);
+    }
 }

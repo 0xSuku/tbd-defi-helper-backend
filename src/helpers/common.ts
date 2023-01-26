@@ -2,10 +2,10 @@
 import erc20 from "./abi/erc20";
 import { ethers } from "ethers";
 import { getProvider } from "../shared/chains";
-import { TokenTypes, tokenTypesData } from "../shared/constants/token";
 import axios from "axios";
 import { TokenDetails, TokenAmount, CoingeckoResponse } from "../shared/types/tokens";
 import { multiplyBN, toFixedTrunc6Digits } from "./math";
+import { tokenTypesData, TokenTypes } from "../shared/constants/token";
 
 let coingeckoPrices: CoingeckoResponse;
 
@@ -16,6 +16,15 @@ export async function getTokenBalances(tokensDetails: TokenDetails[], address: s
         const balanceBN = await tokenContract.balanceOf(address);
         const balance = balanceBN.toString();
         const price = coingeckoResponse[tokenTypesData[tokenDetail.tokenInfo].coingeckoName];
+        if (!price) {
+            console.log(tokenDetail.tokenInfo + ' coingecko doesnt exists');
+            return {
+                tokenDetail,
+                amount: balance,
+                price: 0,
+                usdValue: 0
+            }
+        }
         const usdValue = multiplyBN(balanceBN, price.usd);
         const usdValueString = ethers.utils.formatUnits(usdValue, tokenDetail.token.decimals);
         const tokenAmount: TokenAmount = {
