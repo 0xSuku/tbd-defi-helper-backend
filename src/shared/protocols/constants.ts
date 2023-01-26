@@ -10,4 +10,5 @@ export enum ProtocolTypes {
     Farms,
     Staking,
     Vesting,
+    LiquidityPool,
 }

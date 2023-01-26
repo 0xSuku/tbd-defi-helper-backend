@@ -12,6 +12,8 @@ import solidlyAdapter from './protocol-adapters/solidly/solidly-backend-adapter'
 import { mummyFarms } from './shared/protocols/gmx-forks/mummy/mummy-farms';
 import { gmxFarms } from './shared/protocols/gmx-forks/gmx/gmx-farms';
 import { protocolList } from './shared/protocols/protocol-list';
+import { getUniswapV3Amounts, getUniswapV3TokenAmounts } from './shared/protocols/uniswapv3/uniswapv3';
+import uniswapV3Adapter from './protocol-adapters/uniswapV3/uniswapV3-backend-adapter';
 
 const app: Application = express();
 
@@ -96,6 +98,13 @@ app.get('/fetchWalletProtocols', async (req: Request, res: Response) => {
                     case Protocols.Thena:
                         try {
                             depositInfo = await solidlyAdapter.fetchDepositInfo(address);
+                        } catch (err: any) {
+                            debugger;
+                        }
+                        break;
+                    case Protocols.UniswapV3:
+                        try {
+                            depositInfo = await uniswapV3Adapter.fetchDepositInfo(address);
                         } catch (err: any) {
                             debugger;
                         }

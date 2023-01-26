@@ -27,5 +27,11 @@ export const protocolList: Protocol[] = [
         chainId: ChainId.BNB,
         info: [],
         usdValue: 0
+    }, {
+        symbol: Protocols.UniswapV3,
+        name: 'Uniswap V3',
+        chainId: ChainId.Arbitrum,
+        info: [],
+        usdValue: 0
     }
 ];

@@ -61,8 +61,7 @@ const arbitrum: TokenInfo = {
     WETH: {
         token: new Token(ChainId.Arbitrum, '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', 18, 'WETH', 'WETH'),
         tokenInfo: TokenTypes.ETH,
-    },
-    
+    },    
     WBTC: {
         token: new Token(ChainId.Arbitrum, '0x2f2a2543b76a4166549f7aab2e75bef0aefc5b0f', 8, 'WBTC', 'WBTC'),
         tokenInfo: TokenTypes.BTC,

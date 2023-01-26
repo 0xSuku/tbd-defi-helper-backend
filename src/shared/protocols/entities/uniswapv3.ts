@@ -8,7 +8,6 @@ import { uniswapV3PoolABI } from "../uniswapv3/uniswapv3-abis";
 
 export class UniswapV3DepositInfoBase extends DepositInfo {
     contract: ethers.Contract;
-    poolInfo: PoolInfo;
 
     constructor(
         name: string,
@@ -17,12 +16,10 @@ export class UniswapV3DepositInfoBase extends DepositInfo {
         contractAddress: string,
         tokenDetailsVault: TokenDetails,
         tokenDetailsRewards: TokenDetails,
-        poolInfo: PoolInfo,
     ) {
         super(uniswapV3PoolABI, contractAddress, tokenDetailsVault, tokenDetailsRewards, name, protocol, ProtocolTypes.Farms, chainId);
 
         this.contract = getReadContract(this.chainId, this.address, JSON.stringify(this.abi));
-        this.poolInfo = poolInfo;
     }
 
     async getDepositAmount(address: string): Promise<BigNumber> {
@@ -39,8 +36,7 @@ export class UniswapV3DepositInfo extends UniswapV3DepositInfoBase {
         name: string,
         contractAddress: string,
         tokenDetailsVault: TokenDetails,
-        poolInfo: PoolInfo,
     ) {
-        super(name, Protocols.UniswapV3, ChainId.Arbitrum, contractAddress, tokenDetailsVault, Tokens.arbitrum.WETH, poolInfo);
+        super(name, Protocols.UniswapV3, ChainId.Arbitrum, contractAddress, tokenDetailsVault, Tokens.arbitrum.WETH);
     }
 }
