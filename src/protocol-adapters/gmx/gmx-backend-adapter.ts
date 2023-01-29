@@ -1,21 +1,26 @@
-import { CurrencyAmount, Token } from "@uniswap/sdk-core";
+import { CurrencyAmount } from "@uniswap/sdk-core";
 import { getCoingeckoPricesFromTokenDetails } from "../../helpers/common";
 import { fetchUsdValue } from "../../helpers/math";
-import { BigNumber, ethers } from "ethers";
+import { ethers } from "ethers";
 import { addProtocolItemToCurrentDeposits, getBalanceFromLP } from "../helpers";
-import { ProtocolTypes } from "../../shared/protocols/constants";
+import { Protocols, ProtocolTypes } from "../../shared/protocols/constants";
 import { GmxStakeDepositInfo, GmxVestDepositInfo } from "../../shared/protocols/entities/gmx";
 import { GmxProtocolDeposit, ProtocolInfo } from "../../shared/types/protocols";
-import { CoingeckoResponse, TokenAmount } from "../../shared/types/tokens";
-import { getReadContract } from "../../shared/chains";
-import erc20 from "../../helpers/abi/erc20";
+import { TokenAmount } from "../../shared/types/tokens";
+import { CacheContainer } from 'node-ts-cache'
+import { MemoryStorage } from 'node-ts-cache-storage-memory'
 
+const depositsCache = new CacheContainer(new MemoryStorage());
 export interface IProtocolAdapter {
-    fetchDepositInfo: (address: string, gmxDeposit: GmxProtocolDeposit[]) => Promise<ProtocolInfo[]>;
+    fetchDepositInfo: (address: string, gmxDeposit: GmxProtocolDeposit[], protocol: Protocols, forceRefresh?: boolean) => Promise<ProtocolInfo[]>;
 }
 
 const gmxAdapter: IProtocolAdapter = {
-    fetchDepositInfo: async (address: string, gmxFarms: GmxProtocolDeposit[]) => {
+    fetchDepositInfo: async (address: string, gmxFarms: GmxProtocolDeposit[], protocol: Protocols, forceRefresh?: boolean) => {
+        const depositsCached = await depositsCache.getItem<ProtocolInfo[]>(address + '-' + protocol);
+        if (depositsCached && !forceRefresh) {
+            return depositsCached;
+        }
 
         let deposits: ProtocolInfo[] = [];
 
@@ -107,7 +112,8 @@ const gmxAdapter: IProtocolAdapter = {
                                     }],
                                     usdValue: totalUsdValue,
                                     address: depositInfo.address,
-                                    name: depositInfo.name
+                                    name: depositInfo.name,
+                                    depositId: depositInfo.defiLlamaId || ''
                                 });
                             }
 
@@ -168,7 +174,8 @@ const gmxAdapter: IProtocolAdapter = {
                                     }],
                                     usdValue: totalUsdValue,
                                     address: depositInfo.address,
-                                    name: depositInfo.name
+                                    name: depositInfo.name,
+                                    depositId: depositInfo.defiLlamaId || ''
                                 });
                             }
                         } catch (error) {
@@ -178,10 +185,13 @@ const gmxAdapter: IProtocolAdapter = {
                 }
             })
         );
-        return deposits.map(depositInfo => {
-            depositInfo.items = depositInfo.items?.sort((a, b) => b.usdValue - a.usdValue);
+        const sortedDeposits = deposits.map(depositInfo => {
+            depositInfo.deposits = depositInfo.deposits?.sort((a, b) => b.usdValue - a.usdValue);
             return depositInfo;
         });
+
+        await depositsCache.setItem(address + '-' + protocol, sortedDeposits, { ttl: 86400 });
+        return sortedDeposits;
     }
 }
 export default gmxAdapter;

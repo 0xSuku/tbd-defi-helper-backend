@@ -6,21 +6,21 @@ import { getReadContract } from "../shared/chains";
 import { arrakisVaultV1 } from "../shared/protocols/arrakis/arrakis-abis";
 import { ProtocolTypes } from "../shared/protocols/constants";
 import { ArrakisPoolInfo, DepositInfo } from "../shared/protocols/entities/deposit";
-import { ProtocolInfo, ProtocolItem } from "../shared/types/protocols";
+import { ProtocolInfo, DepositItem } from "../shared/types/protocols";
 import { CoingeckoResponse, TokenAmount } from "../shared/types/tokens";
 
-export function addProtocolItemToCurrentDeposits(currentDeposits: ProtocolInfo[], protocolType: ProtocolTypes, protocolItem: ProtocolItem) {
+export function addProtocolItemToCurrentDeposits(currentDeposits: ProtocolInfo[], protocolType: ProtocolTypes, protocolItem: DepositItem) {
     let deposit = currentDeposits.find(currentDeposit => currentDeposit.type === protocolType);
     if (!deposit) {
         deposit = {
             type: protocolType,
-            items: [],
+            deposits: [],
             usdValue: 0,
         };
         currentDeposits.push(deposit);
     }
 
-    deposit.items?.push(protocolItem);
+    deposit.deposits?.push(protocolItem);
     deposit.usdValue += protocolItem.usdValue;
 }
 

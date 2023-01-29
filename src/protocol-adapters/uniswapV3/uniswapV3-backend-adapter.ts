@@ -8,13 +8,20 @@ import { UniswapV3DepositInfoBase } from "../../shared/protocols/entities/uniswa
 import { fetchUsdValue } from "../../helpers/math";
 import uniswapV3Deposits from "../../shared/protocols/uniswapv3/uniswapv3-farms";
 import { ethers } from "ethers";
+import { CacheContainer } from 'node-ts-cache'
+import { MemoryStorage } from 'node-ts-cache-storage-memory'
 
+const depositsCache = new CacheContainer(new MemoryStorage());
 export interface IProtocolAdapter {
-    fetchDepositInfo: (address: string) => Promise<ProtocolInfo[]>;
+    fetchDepositInfo: (address: string, forceRefresh?: boolean) => Promise<ProtocolInfo[]>;
 }
 
 const uniswapV3Adapter: IProtocolAdapter = {
-    fetchDepositInfo: async (address: string) => {
+    fetchDepositInfo: async (address: string, forceRefresh?: boolean) => {
+        const depositsCached = await depositsCache.getItem<ProtocolInfo[]>(address);
+        if (depositsCached && !forceRefresh) {
+            return depositsCached;
+        }
         let deposits: ProtocolInfo[] = [];
 
         await Promise.all(uniswapV3Deposits.map(async (depositInfo: UniswapV3DepositInfoBase) => {
@@ -61,16 +68,20 @@ const uniswapV3Adapter: IProtocolAdapter = {
                             rewards: [],
                             usdValue: totalUsdValue,
                             address: depositInfo.address,
-                            name: depositInfo.name
+                            name: depositInfo.name,
+                            depositId: depositInfo.defiLlamaId || ''
                         });
                     }));
                 }
             }
         }));
-        return deposits.map(depositInfo => {
-            depositInfo.items = depositInfo.items?.sort((a, b) => b.usdValue - a.usdValue);
+        const sortedDeposits = deposits.map(depositInfo => {
+            depositInfo.deposits = depositInfo.deposits?.sort((a, b) => b.usdValue - a.usdValue);
             return depositInfo;
         });
+
+        await depositsCache.setItem(address, sortedDeposits, { ttl: 86400 });
+        return sortedDeposits;
     }
 }
 export default uniswapV3Adapter;

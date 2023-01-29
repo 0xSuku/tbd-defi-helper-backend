@@ -21,8 +21,14 @@ export async function getUniswapV3Amounts(address: string, chainId: ChainId): Pr
     const nftContract = getReadContract(chainId, nftManagerAddress, JSON.stringify(uniswapV3NFTABI));
     const nftAmountOnAddress = await nftContract.balanceOf(address);
     if (nftAmountOnAddress > 0) {
-        nftContract.queryFilter(nftContract.filters.Transfer(address, null));
-        const tokens = await listTokensOfOwner(chainId, nftManagerAddress, address);
+        let tokens;
+        if (true) {
+            const tokenId = await nftContract.tokenOfOwnerByIndex(address, 0);
+            tokens = new Set();
+            tokens.add(tokenId.toString());
+        } else {
+            tokens = await listTokensOfOwner(chainId, nftManagerAddress, address);
+        }
         const tokenIds = tokens.values();
 
         let poolsInfo: UniswapV3Amounts[] = [];

@@ -7,13 +7,20 @@ import { QiDaoFarmVaultDepositInfo } from "../../shared/protocols/entities/qidao
 import { addProtocolItemToCurrentDeposits, getBalanceFromLP } from "../helpers";
 import qiFarms from "../../shared/protocols/qidao/qidao-farms";
 import { TokenAmount } from "../../shared/types/tokens";
+import { CacheContainer } from 'node-ts-cache'
+import { MemoryStorage } from 'node-ts-cache-storage-memory'
 
+const depositsCache = new CacheContainer(new MemoryStorage());
 export interface IProtocolAdapter {
-    fetchDepositInfo: (address: string) => Promise<ProtocolInfo[]>;
+    fetchDepositInfo: (address: string, forceRefresh?: boolean) => Promise<ProtocolInfo[]>;
 }
 
 const qiAdapter: IProtocolAdapter = {
-    fetchDepositInfo: async (address: string) => {
+    fetchDepositInfo: async (address: string, forceRefresh?: boolean) => {
+        const depositsCached = await depositsCache.getItem<ProtocolInfo[]>(address);
+        if (depositsCached && !forceRefresh) {
+            return depositsCached;
+        }
         let deposits: ProtocolInfo[] = [];
 
         await Promise.all(
@@ -76,15 +83,19 @@ const qiAdapter: IProtocolAdapter = {
                         }],
                         usdValue: totalUsdValue,
                         address: depositInfo.address,
-                        name: depositInfo.name
+                        name: depositInfo.name,
+                        depositId: depositInfo.defiLlamaId || ''
                     });
                 }
             })
         );
-        return deposits.map(depositInfo => {
-            depositInfo.items = depositInfo.items?.sort((a, b) => b.usdValue - a.usdValue);
+        const sortedDeposits = deposits.map(depositInfo => {
+            depositInfo.deposits = depositInfo.deposits?.sort((a, b) => b.usdValue - a.usdValue);
             return depositInfo;
         });
+
+        await depositsCache.setItem(address, sortedDeposits, { ttl: 86400 });
+        return sortedDeposits;
     }
 }
 export default qiAdapter;

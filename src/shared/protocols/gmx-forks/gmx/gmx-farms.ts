@@ -9,7 +9,7 @@ export const fGlpAddress = '0x4e971a87900b931fF39d1Aad67697F49835400b6';
 export const fGmxAddress = '0xd2D1162512F927a7e282Ef43a362659E4F2a728F';
 export const gmxRewardRouterAddress = '0xa906f338cb21815cbc4bc87ace9e68c87ef8d8f1';
 
-const stakedGmx = new GmxStakeDepositInfo('Staked GMX', Tokens.arbitrum.sGMX, fGmxAddress);
+const stakedGmx = new GmxStakeDepositInfo('Staked GMX', Tokens.arbitrum.sGMX, fGmxAddress, '4df7d373-6214-4a73-9bd3-ca6e5683d846');
 const glpPoolInfo: PoolInfo = new PoolInfo([
     Tokens.arbitrum.USDC,
     Tokens.arbitrum.WETH,
@@ -19,7 +19,7 @@ const glpPoolInfo: PoolInfo = new PoolInfo([
     Tokens.arbitrum.UNI,
     Tokens.arbitrum.MIM,
 ], '0x489ee077994b6658eafa855c308275ead8097c4a', ChainId.Arbitrum, vaultABI);
-const stakedGlp = new GmxStakeDepositInfo('Staked GLP', Tokens.arbitrum.fsGLP, fGlpAddress, glpPoolInfo);
+const stakedGlp = new GmxStakeDepositInfo('Staked GLP', Tokens.arbitrum.fsGLP, fGlpAddress, '825688c0-c694-4a6b-8497-177e425b7348', glpPoolInfo);
 const vestedGmx = new GmxVestDepositInfo('Vesting GMX', Tokens.arbitrum.vGLP);
 const vestedGlp = new GmxVestDepositInfo('Vesting GLP', Tokens.arbitrum.vGMX);
 

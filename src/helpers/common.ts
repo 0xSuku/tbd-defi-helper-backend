@@ -6,10 +6,18 @@ import axios from "axios";
 import { TokenDetails, TokenAmount, CoingeckoResponse } from "../shared/types/tokens";
 import { multiplyBN, toFixedTrunc6Digits } from "./math";
 import { tokenTypesData, TokenTypes } from "../shared/constants/token";
+import { CacheContainer } from 'node-ts-cache'
+import { MemoryStorage } from 'node-ts-cache-storage-memory';
 
+const tokenBalancesCache = new CacheContainer(new MemoryStorage());
+const nativeBalancesCache = new CacheContainer(new MemoryStorage());
 let coingeckoPrices: CoingeckoResponse;
 
-export async function getTokenBalances(tokensDetails: TokenDetails[], address: string): Promise<TokenAmount[]> {
+export async function getTokenBalances(tokensDetails: TokenDetails[], address: string, forceRefresh?: boolean): Promise<TokenAmount[]> {
+    const tokenBalancesCached = await tokenBalancesCache.getItem<TokenAmount[]>(address);   
+    if (tokenBalancesCached && !forceRefresh) {
+        return tokenBalancesCached;
+    }
     const coingeckoResponse = await getCoingeckoPricesFromTokenDetails(tokensDetails);
     let amounts: TokenAmount[] = await Promise.all(tokensDetails.map(async tokenDetail => {
         const tokenContract = new ethers.Contract(tokenDetail.token.address, erc20, getProvider(tokenDetail.token.chainId));
@@ -35,10 +43,15 @@ export async function getTokenBalances(tokensDetails: TokenDetails[], address: s
         }
         return tokenAmount;
     }));
+    await tokenBalancesCache.setItem(address, amounts, {ttl: 86400});
     return amounts;
 }
 
-export async function getNativeBalances(tokensDetails: TokenDetails[], address: string): Promise<TokenAmount[]> {
+export async function getNativeBalances(tokensDetails: TokenDetails[], address: string, forceRefresh?: boolean): Promise<TokenAmount[]> {
+    const nativeBalancesCached = await nativeBalancesCache.getItem<TokenAmount[]>(address);   
+    if (nativeBalancesCached && !forceRefresh) {
+        return nativeBalancesCached;
+    }
     const coingeckoResponse = await getCoingeckoPricesFromTokenDetails(tokensDetails);
     const amounts: TokenAmount[] = await Promise.all(tokensDetails.map(async tokenDetail => {
         const provider = getProvider(tokenDetail.token.chainId);
@@ -57,6 +70,7 @@ export async function getNativeBalances(tokensDetails: TokenDetails[], address: 
         }
         return tokenAmount;
     }));
+    await nativeBalancesCache.setItem(address, amounts, {ttl: 86400});
     return amounts;
 }
 

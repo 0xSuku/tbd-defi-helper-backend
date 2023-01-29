@@ -50,9 +50,11 @@ export class GmxStakeDepositInfo extends GmxStakeDepositInfoBase {
         name: string,
         tokenDetailsStake: TokenDetails,
         feeStakeTokenAddress: string,
+        defiLlamaId: string,
         poolInfo?: PoolInfo,
     ) {
         super(name, Protocols.GMX, ChainId.Arbitrum, tokenDetailsStake, Tokens.arbitrum.GMX, Tokens.arbitrum.WETH, feeStakeTokenAddress, poolInfo);
+        this.defiLlamaId = defiLlamaId;
     }
 }
 

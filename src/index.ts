@@ -1,18 +1,17 @@
 import express, { Application, Request, Response } from 'express';
 import bodyParser from 'body-parser';
-import qiAdapter from './protocol-adapters/qidao/qidao-backend-adapter';
-import gmxAdapter from './protocol-adapters/gmx/gmx-backend-adapter';
 import cors from 'cors';
 import { TokenAmount, TokenDetails } from './shared/types/tokens';
 import { Tokens } from './shared/tokens';
 import { Protocol, ProtocolInfo } from './shared/types/protocols';
 import { Protocols, ProtocolTypes } from './shared/protocols/constants';
 import { getTokenBalances, getNativeBalances, fetchCoingeckoPrices } from './helpers/common';
-import solidlyAdapter from './protocol-adapters/solidly/solidly-backend-adapter';
 import { mummyFarms } from './shared/protocols/gmx-forks/mummy/mummy-farms';
 import { gmxFarms } from './shared/protocols/gmx-forks/gmx/gmx-farms';
 import { protocolList } from './shared/protocols/protocol-list';
-import { getUniswapV3Amounts, getUniswapV3TokenAmounts } from './shared/protocols/uniswapv3/uniswapv3';
+import qiAdapter from './protocol-adapters/qidao/qidao-backend-adapter';
+import gmxAdapter from './protocol-adapters/gmx/gmx-backend-adapter';
+import solidlyAdapter from './protocol-adapters/solidly/solidly-backend-adapter';
 import uniswapV3Adapter from './protocol-adapters/uniswapV3/uniswapV3-backend-adapter';
 
 const app: Application = express();
@@ -83,14 +82,14 @@ app.get('/fetchWalletProtocols', async (req: Request, res: Response) => {
                         break;
                     case Protocols.Mummy:
                         try {
-                            depositInfo = await gmxAdapter.fetchDepositInfo(address, mummyFarms);
+                            depositInfo = await gmxAdapter.fetchDepositInfo(address, mummyFarms, protocol.symbol);
                         } catch (err: any) {
                             debugger;
                         }
                         break;
                     case Protocols.GMX:
                         try {
-                            depositInfo = await gmxAdapter.fetchDepositInfo(address, gmxFarms);
+                            depositInfo = await gmxAdapter.fetchDepositInfo(address, gmxFarms, protocol.symbol);
                         } catch (err: any) {
                             debugger;
                         }
@@ -110,7 +109,7 @@ app.get('/fetchWalletProtocols', async (req: Request, res: Response) => {
                         }
                         break;
                     default:
-                        protocol.info.push({ type: ProtocolTypes.Farms, items: [], usdValue: 0 });
+                        protocol.info.push({ type: ProtocolTypes.Farms, deposits: [], usdValue: 0 });
                         break;
                 }
                 if (depositInfo.length) {

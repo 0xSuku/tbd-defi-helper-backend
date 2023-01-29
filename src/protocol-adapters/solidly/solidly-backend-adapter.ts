@@ -8,55 +8,62 @@ import { addProtocolItemToCurrentDeposits, getBalanceFromLP } from "../helpers";
 import { SolidlyGaugeV2DepositInfoBase } from "../../shared/protocols/entities/solidly";
 import solidlyDeposits from "../../shared/protocols/solidly-forks/thena/thena-farms";
 import { TokenAmount } from "../../shared/types/tokens";
+import { CacheContainer } from 'node-ts-cache'
+import { MemoryStorage } from 'node-ts-cache-storage-memory'
 
+const depositsCache = new CacheContainer(new MemoryStorage());
 export interface IProtocolAdapter {
     fetchDepositInfo: (address: string) => Promise<ProtocolInfo[]>;
 }
 
 const solidlyAdapter: IProtocolAdapter = {
-    fetchDepositInfo: async (address: string) => {
+    fetchDepositInfo: async (address: string, forceRefresh?: boolean) => {
+        const depositsCached = await depositsCache.getItem<ProtocolInfo[]>(address);
+        if (depositsCached && !forceRefresh) {
+            return depositsCached;
+        }
         let deposits: ProtocolInfo[] = [];
 
         await Promise.all(
-            solidlyDeposits.map(async (farmVaultDepositInfo: SolidlyGaugeV2DepositInfoBase) => {
-                if (farmVaultDepositInfo.contract) {
+            solidlyDeposits.map(async (depositInfo: SolidlyGaugeV2DepositInfoBase) => {
+                if (depositInfo.contract) {
 
                     const coingeckoResponse = await getCoingeckoPricesFromTokenDetails([
                         // farmVaultDepositInfo.tokenDetailsRewards,
                         ...(
-                            farmVaultDepositInfo.poolInfo ?
-                                farmVaultDepositInfo.poolInfo.tokens :
+                            depositInfo.poolInfo ?
+                                depositInfo.poolInfo.tokens :
                                 []
                         )
                     ]);
 
-                    const farmingDeposit: BigNumber = await farmVaultDepositInfo.getDepositAmount(address);
-                    const farmingDepositCA = CurrencyAmount.fromRawAmount(farmVaultDepositInfo.tokenDetails.token, farmingDeposit.toString());
+                    const farmingDeposit: BigNumber = await depositInfo.getDepositAmount(address);
+                    const farmingDepositCA = CurrencyAmount.fromRawAmount(depositInfo.tokenDetails.token, farmingDeposit.toString());
                     const farmingDepositExact = farmingDepositCA.toExact();
 
                     let balanceTokens: TokenAmount[] = [];
-                    if (farmVaultDepositInfo.poolInfo) {
-                        balanceTokens = await getBalanceFromLP(farmVaultDepositInfo, farmingDepositCA, coingeckoResponse);
+                    if (depositInfo.poolInfo) {
+                        balanceTokens = await getBalanceFromLP(depositInfo, farmingDepositCA, coingeckoResponse);
                     } else {
                         let stakedUsdValue = 0;
                         let stakedPrice = 0;
 
                         ({ price: stakedPrice, usdValue: stakedUsdValue } = fetchUsdValue(
                             coingeckoResponse,
-                            farmVaultDepositInfo.tokenDetails,
+                            depositInfo.tokenDetails,
                             farmingDeposit
                         ));
 
                         balanceTokens = [{
                             amount: farmingDepositExact,
-                            tokenDetail: farmVaultDepositInfo.tokenDetails,
+                            tokenDetail: depositInfo.tokenDetails,
                             price: stakedPrice,
                             usdValue: stakedUsdValue
                         }];
                     }
 
-                    const farmingRewards: BigNumber = await farmVaultDepositInfo.getRewardAmount(address);
-                    const farmingRewardsCA = CurrencyAmount.fromRawAmount(farmVaultDepositInfo.tokenDetailsRewards.token, farmingRewards.toString());
+                    const farmingRewards: BigNumber = await depositInfo.getRewardAmount(address);
+                    const farmingRewardsCA = CurrencyAmount.fromRawAmount(depositInfo.tokenDetailsRewards.token, farmingRewards.toString());
                     const farmingRewardsExact = farmingRewardsCA.toExact();
 
                     if (farmingDeposit.gt(0) || farmingRewards.gt(0)) {
@@ -72,25 +79,29 @@ const solidlyAdapter: IProtocolAdapter = {
                         let totalUsdValue = balanceTokensUsdValue + farmingRewardsUsdValue;
                         addProtocolItemToCurrentDeposits(deposits, ProtocolTypes.Farms, {
                             balance: balanceTokens,
-                            pool: [farmVaultDepositInfo.tokenDetails],
+                            pool: [depositInfo.tokenDetails],
                             rewards: [{
                                 amount: farmingRewardsExact,
-                                tokenDetail: farmVaultDepositInfo.tokenDetailsRewards,
+                                tokenDetail: depositInfo.tokenDetailsRewards,
                                 price: farmingRewardsPrice,
                                 usdValue: farmingRewardsUsdValue,
                             }],
                             usdValue: totalUsdValue,
-                            address: farmVaultDepositInfo.address,
-                            name: farmVaultDepositInfo.name
+                            address: depositInfo.address,
+                            name: depositInfo.name,
+                            depositId: depositInfo.defiLlamaId || ''
                         });
                     }
                 }
             })
         );
-        return deposits.map(depositInfo => {
-            depositInfo.items = depositInfo.items?.sort((a, b) => b.usdValue - a.usdValue);
+        const sortedDeposits = deposits.map(depositInfo => {
+            depositInfo.deposits = depositInfo.deposits?.sort((a, b) => b.usdValue - a.usdValue);
             return depositInfo;
         });
+
+        await depositsCache.setItem(address, sortedDeposits, { ttl: 86400 });
+        return sortedDeposits;
     }
 }
 export default solidlyAdapter;

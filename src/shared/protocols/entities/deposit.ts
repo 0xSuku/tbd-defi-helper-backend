@@ -12,6 +12,7 @@ export abstract class DepositInfo {
     protocol: Protocols;
     type: ProtocolTypes;
     chainId: ChainId;
+    defiLlamaId?: string;
     poolInfo?: PoolInfoBase;
 
     constructor(
@@ -64,24 +65,6 @@ export abstract class PoolInfoBase {
     }
 }
 
-export class PoolInfo extends PoolInfoBase {
-    constructor(
-        tokens: TokenDetails[],
-        address: string,
-        chainId: ChainId,
-        abi: Record<string, any>[],
-    ) {
-        super(tokens, address, chainId, abi);
-    }
-}
+export class PoolInfo extends PoolInfoBase {}
 
-export class ArrakisPoolInfo extends PoolInfoBase {
-    constructor(
-        tokens: TokenDetails[],
-        address: string,
-        chainId: ChainId,
-        abi: Record<string, any>[],
-    ) {
-        super(tokens, address, chainId, abi);
-    }
-}
+export class ArrakisPoolInfo extends PoolInfoBase {}

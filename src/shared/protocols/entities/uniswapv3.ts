@@ -36,7 +36,9 @@ export class UniswapV3DepositInfo extends UniswapV3DepositInfoBase {
         name: string,
         contractAddress: string,
         tokenDetailsVault: TokenDetails,
+        defiLlamaId: string,
     ) {
         super(name, Protocols.UniswapV3, ChainId.Arbitrum, contractAddress, tokenDetailsVault, Tokens.arbitrum.WETH);
+        this.defiLlamaId = defiLlamaId;
     }
 }

@@ -4,17 +4,18 @@ import { GmxStakeDepositInfo, GmxVestDepositInfo, MummyStakeDepositInfo, MummyVe
 import { QiDaoFarmVaultDepositInfo } from '../protocols/entities/qidao';
 import { TokenAmount, TokenDetails } from './tokens';
 
-export interface ProtocolItem {
+export interface DepositItem {
     pool: TokenDetails[];
     balance: TokenAmount[];
     rewards?: TokenAmount[];
     usdValue: number;
     address: string;
     name: string;
+    depositId: string;
 }
 
 export interface ProtocolInfo {
-    items?: ProtocolItem[];
+    deposits?: DepositItem[];
     usdValue: number;
     type: ProtocolTypes;
 }
