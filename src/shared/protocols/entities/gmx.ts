@@ -69,6 +69,17 @@ export class MummyStakeDepositInfo extends GmxStakeDepositInfoBase {
     }
 }
 
+export class BaymaxStakeDepositInfo extends GmxStakeDepositInfoBase {
+    constructor(
+        name: string,
+        tokenDetailsStake: TokenDetails,
+        feeStakeTokenAddress: string,
+        poolInfo?: PoolInfo,
+    ) {
+        super(name, Protocols.BAYMAX, ChainId.Avalanche, tokenDetailsStake, Tokens.avalanche.BAY, Tokens.avalanche.WAVAX, feeStakeTokenAddress, poolInfo);
+    }
+}
+
 export class GmxVestDepositInfoBase extends DepositInfo {
     contract: ethers.Contract;
 
@@ -107,5 +118,14 @@ export class MummyVestDepositInfo extends GmxVestDepositInfoBase {
         tokenDetailsVest: TokenDetails,
     ) {
         super(name, Protocols.Mummy, ChainId.Fantom, tokenDetailsVest, Tokens.fantom.MMY);
+    }
+}
+
+export class BaymaxVestDepositInfo extends GmxVestDepositInfoBase {
+    constructor(
+        name: string,
+        tokenDetailsVest: TokenDetails,
+    ) {
+        super(name, Protocols.BAYMAX, ChainId.Avalanche, tokenDetailsVest, Tokens.avalanche.BAY);
     }
 }

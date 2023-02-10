@@ -22,6 +22,12 @@ export const protocolList: Protocol[] = [
         info: [],
         usdValue: 0
     }, {
+        symbol: Protocols.BAYMAX,
+        name: 'BAYMAX',
+        chainId: ChainId.Avalanche,
+        info: [],
+        usdValue: 0
+    }, {
         symbol: Protocols.Thena,
         name: 'Thena',
         chainId: ChainId.BNB,

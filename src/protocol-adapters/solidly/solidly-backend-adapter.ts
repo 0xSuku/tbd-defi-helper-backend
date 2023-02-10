@@ -29,7 +29,7 @@ const solidlyAdapter: IProtocolAdapter = {
                 if (depositInfo.contract) {
 
                     const coingeckoResponse = await getCoingeckoPricesFromTokenDetails([
-                        // farmVaultDepositInfo.tokenDetailsRewards,
+                        depositInfo.tokenDetailsRewards,
                         ...(
                             depositInfo.poolInfo ?
                                 depositInfo.poolInfo.tokens :
@@ -69,11 +69,11 @@ const solidlyAdapter: IProtocolAdapter = {
                     if (farmingDeposit.gt(0) || farmingRewards.gt(0)) {
                         let farmingRewardsUsdValue = 0;
                         let farmingRewardsPrice = 0;
-                        // ({ price: farmingRewardsPrice, usdValue: farmingRewardsUsdValue } = fetchUsdValue(
-                        //     coingeckoResponse,
-                        //     farmVaultDepositInfo.tokenDetailsRewards,
-                        //     farmingRewards
-                        // ));
+                        ({ price: farmingRewardsPrice, usdValue: farmingRewardsUsdValue } = fetchUsdValue(
+                            coingeckoResponse,
+                            depositInfo.tokenDetailsRewards,
+                            farmingRewards
+                        ));
 
                         const balanceTokensUsdValue = balanceTokens.reduce((accum, bt) => accum + bt.usdValue, 0);
                         let totalUsdValue = balanceTokensUsdValue + farmingRewardsUsdValue;

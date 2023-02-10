@@ -37,6 +37,7 @@ export enum TokenTypes {
 	HAY = 'HAY',
 	IDIA = 'IDIA',
 	DEI = 'DEI',
+	BAY = 'BAY',
 }
 
 export interface TokenTypesData {
@@ -167,7 +168,7 @@ export const tokenTypesData: Record<TokenTypes, TokenTypesData> = {
 	},
 	'THE': {
 		isStable: false,
-		coingeckoName: ''
+		coingeckoName: 'thena'
 	},
 	'FRAX': {
 		isStable: true,
@@ -196,5 +197,9 @@ export const tokenTypesData: Record<TokenTypes, TokenTypesData> = {
 	'DEI': {
 		isStable: true,
 		coingeckoName: 'dei-token'
+	},
+	'BAY': {
+		isStable: false,
+		coingeckoName: 'baymax-finance'
 	}
 }

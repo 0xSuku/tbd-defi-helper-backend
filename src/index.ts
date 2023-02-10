@@ -13,6 +13,7 @@ import qiAdapter from './protocol-adapters/qidao/qidao-backend-adapter';
 import gmxAdapter from './protocol-adapters/gmx/gmx-backend-adapter';
 import solidlyAdapter from './protocol-adapters/solidly/solidly-backend-adapter';
 import uniswapV3Adapter from './protocol-adapters/uniswapV3/uniswapV3-backend-adapter';
+import { baymaxFarms } from './shared/protocols/gmx-forks/baymax/baymax-farms';
 
 const app: Application = express();
 
@@ -90,6 +91,13 @@ app.get('/fetchWalletProtocols', async (req: Request, res: Response) => {
                     case Protocols.GMX:
                         try {
                             depositInfo = await gmxAdapter.fetchDepositInfo(address, gmxFarms, protocol.symbol);
+                        } catch (err: any) {
+                            debugger;
+                        }
+                        break;
+                    case Protocols.BAYMAX:
+                        try {
+                            depositInfo = await gmxAdapter.fetchDepositInfo(address, baymaxFarms, protocol.symbol);
                         } catch (err: any) {
                             debugger;
                         }
